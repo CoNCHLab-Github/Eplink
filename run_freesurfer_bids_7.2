@@ -1,0 +1,66 @@
+#!/bin/bash
+
+: '
+Script to run recon-all for a subject dataset in bids format
+Intended to be used with regularBatch with regularBatch, regularSubmit,
+or in a regularInteractive job.
+
+Originally form https://github.com/khanlab/neuroglia-helpers
+Modified by: Ali Tafakkor, atafakko@uwo.ca 
+'
+
+# freeSurfer version to run
+version=7.2.0
+
+# Print usage guide in case of missing passed arguments 
+if [ "$#" -lt 2 ]
+then 
+ echo "Freesurfer ${version} *mini* bids-app  - runs recon-all -parallel -hires -threads 8 -all ... "
+ echo ""
+ echo "Must use this command with regularBatch, regularSubmit, or in a regularInteractive job"
+ echo " as it uses the SLURM_TMPDIR local scratch to run. "
+ echo ""
+ echo "Usage: $0 <subject> <bids_dir> <output_dir> <optional recon-all args>"
+ echo ""
+ echo " e.g.: regularBatch $0 subjects.txt -a \"/path/to/bids_dir /path/to/output_dir\" -j 8core32gb12h "
+ echo " where each line of subjects.txt contains e.g. sub-001"
+ exit 1
+fi
+
+# first passed argument would be the subject id
+subject=$1
+
+# take the input bids and output directories 
+# as the second arguments divided by a space
+bids_dir=`realpath $(echo "$2" | awk '{print $1}')`
+out_dir=`realpath $(echo "$2" | awk '{print $2}')`
+
+# Make sure the script is running on a compute node
+if [ -z "$SLURM_TMPDIR" ]; then echo "must run this script on compute node"; exit 1; else echo "SLURM_TMPDIR=$SLURM_TMPDIR"; fi
+
+shift 2
+optargs=$@
+
+# Select the T1w or MP2RAGE anatomical scans assuming BIDS structure 
+# You can modify to more narrowly filter files
+in_imgs=`ls $bids_dir/${subject}/*/anat/*T1w.nii.gz $bids_dir/${subject}/anat/*MP2RAGE_T1map.nii.gz`
+
+in_cmd=""
+for img in $in_imgs
+do
+ in_cmd="$in_cmd -i $img"
+done
+    
+# load specified 
+module load freesurfer/${version}
+mkdir -p $out_dir
+#run it in tempdir, then copy it over when finished
+recon-all -threads 8 -sd $SLURM_TMPDIR  -subjid $subject -parallel -hires -all $in_cmd $optargs
+if [ "$?" = "0" ]
+then
+    pushd $SLURM_TMPDIR
+    tar -cvf $out_dir/$subject.tar ${subject} 
+    popd
+else
+    touch $out_dir/$subject.FAILED
+fi
