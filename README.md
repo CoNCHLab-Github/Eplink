@@ -44,15 +44,14 @@ regularBatch <script_name> <participants_list_text> -b <before-args> -a <after-a
 - -b /args/ : cmd-line arguments that go *before* the subject id
 - -a /args/ : cmd-line arguments that go *after* the subject id
 
-**For running all subjects:**
+**For running subjects in `subjects.txt`:**
 ```
-regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"datasets/eplink-p3/bids eplink-p3-freeSurfer-out/freesurfer_7.2\"" -j 8core32gb12h
+regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"path/to/bids path/to/output\"" -j 8core32gb12h
 ```
-`run_freesurfer_bids_7.2`: script that runs freesurfer recon-all for one subject (available in this repository).
-
-`subjects.txt`: stores the subjects IDs that is going to be analyzed (included for phase III). You can change this file to rerun freesurfer on arbitrary subjects. One subject id in each line including the 'sub-' (example for all phase III subjects is included in this repository).
-
-`-j 8core32gb12h`: 
+- `run_freesurfer_bids_7.2`: script that runs freesurfer recon-all for one subject (available in this repository).
+- `subjects.txt`: stores the subjects IDs that is going to be analyzed (included for phase III). You can change this file to rerun freesurfer on arbitrary subjects. One subject id in each line including the 'sub-' (example for all phase III subjects is included in this repository).
+- `-a "\"path/to/bids path/to/output\""`: passes both bids and output directories to the script as one argument (space seperated).
+- `-j 8core32gb12h`: specifies job template for each participant (8 cores, 32GB RAM, 12 hours)
 
 
 
@@ -63,15 +62,18 @@ Datasets were preprocessed by the **fMRIprep** pipeline version **20.2.6**. `bid
 ```
 bidsBatch <bidsBatch options> <app_name> <bids_dir> <output_dir> <participant/group> <app options>
 ```
+- For the full list of available apps run `bidsBatch` command.
+- Find a full list of fMRIprep options [here](https://fmriprep.org/en/stable/usage.html).
 
 **For running all subjects:**
 ```
 bidsBatch fMRIprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MNI152NLin2009cAsym T1w --fs-subjects-path <freesurfer_output_dir>
 ```
 
-`<bids_dir>` and `<output_dir>` can be relative or absolute paths to raw data and output folder. fMRIprep option `--output-spaces` is set to generate outputs in both native (`T1w`) and MNI template spaces (`MNI152NLin2009cAsym`). 
-
-default: OUTPUT_DIR/freesurfer
+- `<bids_dir>` and `<output_dir>` can be relative or absolute paths to raw data and output folder.  
+- fMRIprep option `--output-spaces` is set to generate outputs in both native (`T1w`) and MNI template spaces (`MNI152NLin2009cAsym`).
+- `--fs-subjects-path` is the path to freesurfer output (default: OUTPUT_DIR/freesurfer).
 
 ### Step 3: ISC pipeline
 
+The inter-subject correlation pipline is implemented using the snakemake workflow available in this repository.
