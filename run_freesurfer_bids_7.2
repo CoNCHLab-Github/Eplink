@@ -9,7 +9,7 @@ Originally form https://github.com/khanlab/neuroglia-helpers
 Modified by: Ali Tafakkor, atafakko@uwo.ca 
 '
 
-# freeSurfer version to run
+# freeSurfer version to load
 version=7.2.0
 
 # Print usage guide in case of missing passed arguments 
@@ -22,7 +22,7 @@ then
  echo ""
  echo "Usage: $0 <subject> <bids_dir> <output_dir> <optional recon-all args>"
  echo ""
- echo " e.g.: regularBatch $0 subjects.txt -a \"/path/to/bids_dir /path/to/output_dir\" -j 8core32gb12h "
+ echo " e.g.: regularBatch $0 subjects.txt -a "\"/path/to/bids_dir /path/to/output_dir\"" -j 8core32gb12h "
  echo " where each line of subjects.txt contains e.g. sub-001"
  exit 1
 fi
@@ -51,10 +51,12 @@ do
  in_cmd="$in_cmd -i $img"
 done
     
-# load specified 
+# Load specified freesurfer version
 module load freesurfer/${version}
+# Create output directory
 mkdir -p $out_dir
-#run it in tempdir, then copy it over when finished
+
+# Run recon-all in tempdir, then copy it over when finished
 recon-all -threads 8 -sd $SLURM_TMPDIR  -subjid $subject -parallel -hires -all $in_cmd $optargs
 if [ "$?" = "0" ]
 then
