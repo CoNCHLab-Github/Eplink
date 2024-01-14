@@ -1,6 +1,6 @@
 # Eplink
 
-The current repository stores all codes used for stimulus presentation and analyzing Eplink data (Phase II, Phase III, and TWH) along with a detailed walkthrough of the preprocesing and analysis.
+The current repository stores codes used for stimulus presentation and analyzing Eplink data (Phase II, Phase III, and TWH) along with a detailed walkthrough of the preprocesing and analysis.
 
 ## Datasets
 
@@ -49,7 +49,7 @@ regularBatch <script_name> <participants_list_text> -b <before-args> -a <after-a
 regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"path/to/bids path/to/output\"" -j 8core32gb12h
 ```
 - `run_freesurfer_bids_7.2`: script that runs freesurfer recon-all for one subject (available in this repository).
-- `subjects.txt`: stores the subjects IDs that is going to be analyzed (included for phase III). You can change this file to rerun freesurfer on arbitrary subjects. One subject id in each line including the 'sub-' (example for all phase III subjects is included in this repository).
+- `subjects.txt`: stores the subjects IDs that is going to be analyzed. You can change this file to rerun freesurfer on arbitrary subjects. One subject id in each line including the 'sub-' (example for all phase III subjects is included in this repository).
 - `-a "\"path/to/bids path/to/output\""`: passes both bids and output directories to the script as one argument (space seperated).
 - `-j 8core32gb12h`: specifies job template for each participant (8 cores, 32GB RAM, 12 hours)
 
