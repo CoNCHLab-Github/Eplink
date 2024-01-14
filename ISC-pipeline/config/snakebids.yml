@@ -1,7 +1,86 @@
 ---
+# vol2surf config
+
+output_dir: '/project/6050199/alit/EpLink/eplink-p3-resample2fsLR'
+
+hemi:
+  - L
+  - R
+
+fwhm:
+  - 0
+  - 5
+  - 10
+
+conf:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+
+pybids_inputs:
+  bold:
+    wildcards:
+      - subject
+      - task
+      - run
+      - fwhm
+      - conf
+    custom_path:
+      "/project/6050199/alit/EpLink/eplink-p3-denoise-out/results/sub-{subject}/func/sub-{subject}_task-{task}_run-{run}_space-T1w_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.nii.gz"
+  midthickness:
+    wildcards:
+      - subject
+      - hemi
+    custom_path:
+      "/project/6050199/alit/EpLink/eplink-p3-hcp-mmp-out/hcp_mmp/sub-{subject}/sub-{subject}_hemi-{hemi}_space-native_midthickness.surf.gii"
+  white:
+    wildcards:
+      - subject
+      - hemi
+    custom_path:
+      "/project/6050199/alit/EpLink/eplink-p3-hcp-mmp-out/hcp_mmp/sub-{subject}/sub-{subject}_hemi-{hemi}_space-native_white.surf.gii"
+  pial:
+    wildcards:
+      - subject
+      - hemi
+    custom_path:
+      "/project/6050199/alit/EpLink/eplink-p3-hcp-mmp-out/hcp_mmp/sub-{subject}/sub-{subject}_hemi-{hemi}_space-native_pial.surf.gii"
+---
+# hcp-mmp configs
+
+singularity_freesurfer: /project/6050199/akhanf/singularity/bids-apps/freesurfer_7.2.0_withsubfields.sif
+#singularity_freesurfer: docker://bids/freesurfer:v6.0.1-5
+singularity_connectome_workbench: /project/6050199/akhanf/singularity/connectome-workbench_latest.simg
+#singularity_connectome_workbench: docker://khanlab/connectome-workbench:latest
+
+#path to your freesurfer license file:
+fs_license: /project/6050199/akhanf/opt/freesurfer/.license
+
+#path to subject freesurfer dir (containing surf/ and mri/ subfolders) 
+# use the {subject} wildcard here.. 
+#in_freesurfer: /scratch/akhanf/camcan_hcp_mmp_to_native/in_freesurfer/sub-{subject}
+
+#optional: specify tar containing a particular subject'a freesurfer folder
+in_freesurfer: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}'
+in_freesurfer_root: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2'
+in_freesurfer_tar: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}.tar'
+
+#participants_tsv: config/participants.tsv
+
+---
+# Denoise configs
 search_terms: {}
-bids_dir: path_to_bids_dir
+#optional: specify tar containing a particular subject'a freesurfer folder
+freesurfer: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}'
+freesurfer_root: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2'
+freesurfer_tar: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}.tar'
+
+fMRIprep_dir: path_to_bids_dir
 output_dir: path_to_output_dir
+midthickness_dir: path
+
 
 derivatives: false
 # can alternatively have paths to derivatives folders
