@@ -1,15 +1,21 @@
 # ---- begin snakebids boilerplate ----------------------------------------------
 
 import snakebids
-from snakebids import bids
-
+from snakebids import bids, generate_inputs
+from os.path import join
+import pandas as pd
 
 configfile: "config/snakebids.yml"
 
+### from vol2surf
+inputs = generate_inputs(bids_dir="", pybids_inputs=config["pybids_inputs"])
+
+valid_inputs = inputs["bold"].filter(**inputs["midthickness"].entities["subject",])
+###
 
 # writes inputs_config.yml and updates config dict
 inputs = snakebids.generate_inputs(
-    bids_dir=config["bids_dir"],
+    bids_dir=config["fMRIprep_dir"],
     pybids_inputs=config["pybids_inputs"],
     pybids_config=["bids", "derivatives"],
     # derivatives=config["derivatives"],
@@ -33,6 +39,7 @@ wildcard_constraints:
     fwhm="[0-9]+",
     confounds="[0-9]+",
 
+include: 'rules/common.smk'
 
 rule all:
     input:
@@ -65,7 +72,7 @@ rule smooth:
         fwhm=lambda wildcards: float(wildcards.fwhm),
     output:
         nii=bids(
-            root="results",
+            root="denoised",
             datatype="func",
             desc="smoothed",
             fwhm="{fwhm}",
@@ -73,7 +80,7 @@ rule smooth:
             **inputs["preproc_bold"].wildcards
         ),
         json=bids(
-            root="results",
+            root="denoised",
             datatype="func",
             desc="smoothed",
             fwhm="{fwhm}",
@@ -89,7 +96,7 @@ rule smooth:
 rule denoise:
     input:
         nii=bids(
-            root="results",
+            root="denoised",
             datatype="func",
             desc="smoothed",
             fwhm="{fwhm}",
@@ -97,7 +104,7 @@ rule denoise:
             **inputs["preproc_bold"].wildcards
         ),
         json=bids(
-            root="results",
+            root="denoised",
             datatype="func",
             desc="smoothed",
             fwhm="{fwhm}",
@@ -119,7 +126,7 @@ rule denoise:
         high_pass=False,
     output:
         nii=bids(
-            root="results",
+            root="denoised",
             datatype="func",
             desc="denoised",
             fwhm="{fwhm}",
@@ -128,7 +135,7 @@ rule denoise:
             **inputs["preproc_bold"].wildcards
         ),
         json=bids(
-            root="results",
+            root="denoised",
             datatype="func",
             desc="denoised",
             fwhm="{fwhm}",
@@ -154,5 +161,114 @@ rule just_denoise:
             fwhm=config["fwhm"],
             confounds_idx=range(1, len(config["confounds"]) + 1)
         ),
-    default_target: True
+    #default_target: True
 
+rule extract_from_tar:
+    input: 
+        tar = config['freesurfer_tar']
+    params:
+        out_folder = config['freesurfer_root'],
+        file_in_tar = 'sub-{subject}/{modality}/{filename}'
+    output: 
+        filename = join(config['freesurfer'],'{modality,surf|mri}','{filename}')
+    group: 'participant1'
+    shell: 'mkdir -p {params.out_folder} && tar -C {params.out_folder} --extract --file={input.tar} {params.file_in_tar}'
+
+def get_gifti_input (wildcards):
+    if wildcards.surfname == 'pial': #add .T1 to the name (since pial is a symlink to pial.T1) so can use if extracting from tar
+        return join(config['freesurfer'],'surf','{hemi}.{surfname}.T1'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
+    else:
+        return join(config['freesurfer'],'surf','{hemi}.{surfname}'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
+        
+
+rule convert_to_gifti:
+    input: get_gifti_input
+    output: bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='{surfname}.surf.gii',space='fsaverage')
+    params: 
+        license = config['fs_license']
+    container: config['singularity_freesurfer']
+    log: 'logs/convert_to_gifti/sub-{subject}_{hemi}_{surfname}.log'
+    group: 'participant1'
+    shell: 'FS_LICENSE={params.license} mris_convert {input} {output} &> {log}'
+
+rule convert_to_nifti:
+    input: join(config['freesurfer'],'mri','{volname}.mgz')
+    output: bids(root='midthickness',subject='{subject}',suffix='{volname}.nii.gz')
+    params: 
+        license = config['fs_license']
+    container: config['singularity_freesurfer']
+    log: 'logs/convert_to_nifti/sub-{subject}_{volname}.log'
+    group: 'participant1'
+    shell: 'FS_LICENSE={params.license} mri_convert {input} {output} &> {log}'
+
+rule get_tkr2scanner:
+    input: 
+        t1 = bids(root='midthickness',subject='{subject}',suffix='T1.nii.gz')
+    output:
+        tkr2scanner = bids(root='midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
+    params: 
+        license = config['fs_license']
+    container: config['singularity_freesurfer']
+    log: 'logs/get_tkr2scanner/sub-{subject}.log'
+    group: 'participant1'
+    shell: 'FS_LICENSE={params.license} mri_info {input.t1} --tkr2scanner > {output.tkr2scanner} 2> {log}'
+     
+rule apply_surf_tkr2scanner:
+    input: 
+        surf = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='{surfname}.surf.gii',space='fsaverage'),
+        tkr2scanner = bids(root='midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
+    output: 
+        surf = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='{surfname}.surf.gii')
+    threads: 8
+    container: config['singularity_connectome_workbench']
+    log: 'logs/apply_surf_tkr2scanner/sub-{subject}_{hemi}_{surfname}.log'
+    group: 'participant1'
+    shell: 'wb_command -surface-apply-affine {input.surf} {input.tkr2scanner} {output.surf} &> {log}'
+
+rule gen_midthickness:
+    input:
+        white = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='white.surf.gii',space='{space}'),
+        pial = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='pial.surf.gii',space='{space}')
+    output: 
+        midthickness = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='midthickness.surf.gii',space='{space}')
+    container: config['singularity_connectome_workbench']
+    threads: 8
+    log: 'logs/gen_midthickness/sub-{subject}_{hemi}_{space}.log'
+    group: 'participant1'
+    shell: 'wb_command -surface-average {output.midthickness} -surf {input.white} -surf {input.pial} &> {log}'
+
+rule vol2surf:
+    input:
+        bold = rules.denoise.output.nii
+        #config['bold_dir']+"/sub-{subject}/func/sub-{subject}_task-{task}_run-{run}_space-T1w_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.nii.gz",
+        midthickness = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='midthickness.surf.gii'),
+        white        = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='white.surf.gii'),
+        pial         = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
+    output:
+        bids(root="resampled2fsLR",subject='{subject}',desc='denoised',fwhm='{fwhm}',confounds='{confounds_idx}',hemi='{hemi}',space='native',suffix='bold.func.gii',
+            **inputs["preproc_bold"].wildcards
+        )
+        #bids(root='resampled2fsLR',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
+        #config['output_dir']+"/sub-{subject}/sub-{subject}_hemi-{hemi}_task-{task}_run-{run}_space-native_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.func.gii"
+    shell:
+        "wb_command -volume-to-surface-mapping {input.bold} {input.midthickness} {output} -ribbon-constrained {input.white} {input.pial}"
+
+rule metric_resample:
+    input:
+        vol2surf_out  = rules.vol2surf.output,
+        curr_sphere   = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='fsaverage',suffix='sphere.reg.surf.gii'),
+        #config['surf_dir']+"/sub-{subject}/sub-{subject}_hemi-{hemi}_space-fsaverage_sphere.reg.surf.gii",
+        target_sphere = "resources/standard_mesh_atlases/resample_fsaverage/fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii"
+    output:
+        bids(root='resampled2fsLR/32k_space_surfaces',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
+        #config['output_dir']+"/32k_space_surfaces/sub-{subject}/sub-{subject}_hemi-{hemi}_task-{task}_run-{run}_space-fsLR_den-32k_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.func.gii"
+    shell:
+        "wb_command -metric-resample {input.vol2surf_out} {input.curr_sphere} {input.target_sphere} BARYCENTRIC {output}"
+
+rule resample2fsLR:
+    input:
+        expand(
+            valid_inputs.expand(rules.metric_resample.output, allow_missing=True),
+            hemi=config['hemi']
+        )   
+    #default_target: True
