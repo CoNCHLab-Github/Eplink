@@ -7,12 +7,6 @@ import pandas as pd
 
 configfile: "config/snakebids.yml"
 
-### from vol2surf
-inputs = generate_inputs(bids_dir="", pybids_inputs=config["pybids_inputs"])
-
-valid_inputs = inputs["bold"].filter(**inputs["midthickness"].entities["subject",])
-###
-
 # writes inputs_config.yml and updates config dict
 inputs = snakebids.generate_inputs(
     bids_dir=config["fMRIprep_dir"],
@@ -41,128 +35,88 @@ wildcard_constraints:
 
 include: 'rules/common.smk'
 
-rule all:
-    input:
-        # using the zip lists to expand over all scans, note use of the zip option in expand:
-        denoised=expand(
-            expand(
-                bids(
-                    root="results",
-                    datatype="func",
-                    desc="{{desc}}",
-                    fwhm="{{fwhm}}",
-                    confounds="{{confounds_idx}}",
-                    suffix="bold.nii.gz",
-                    **inputs["preproc_bold"].wildcards
-                ),
-                zip,
-                **inputs["preproc_bold"].zip_lists
-            ),
-            fwhm=config["fwhm"],
-            confounds_idx=range(1, len(config["confounds"]) + 1),
-            desc=["denoised", "AROMAdenoised"],
-        ),
+# rule all:
+#     input:
+#         # using the zip lists to expand over all scans, note use of the zip option in expand:
+#         denoised = expand(
+#                     expand(
+#                 bids(root="results", datatype="func",
+#                     desc="{{desc}}",
+#                     fwhm="{{fwhm}}",
+#                     confounds="{{confounds_idx}}",
+#                     suffix="bold.nii.gz",
+#                     **inputs["preproc_bold"].wildcards
+#                 ),
+#                 zip,
+#                 **inputs["preproc_bold"].zip_lists
+#             ),
+#             fwhm=config["fwhm"],
+#             confounds_idx=range(1, len(config["confounds"]) + 1),
+#             desc=["denoised", "AROMAdenoised"],
+#         ),
 
-
+## Smoothing and denoising rules
 rule smooth:
     input:
-        nii=inputs["preproc_bold"].path,
-        json=re.sub(".nii.gz", ".json", inputs["preproc_bold"].path),
+        nii  = inputs["preproc_bold"].path,
+        json = re.sub(".nii.gz", ".json", inputs["preproc_bold"].path),
     params:
-        fwhm=lambda wildcards: float(wildcards.fwhm),
+        fwhm = lambda wildcards: float(wildcards.fwhm),
     output:
-        nii=bids(
-            root="denoised",
-            datatype="func",
-            desc="smoothed",
-            fwhm="{fwhm}",
-            suffix="bold.nii.gz",
-            **inputs["preproc_bold"].wildcards
-        ),
-        json=bids(
-            root="denoised",
-            datatype="func",
-            desc="smoothed",
-            fwhm="{fwhm}",
-            suffix="bold.json",
-            **inputs["preproc_bold"].wildcards
-        ),
+        nii  = bids(root="denoised", datatype="func", desc="smoothed", fwhm="{fwhm}",
+                    suffix="bold.nii.gz", **inputs["preproc_bold"].wildcards),    
+        json = bids(root="denoised", datatype="func", desc="smoothed", fwhm="{fwhm}",
+                    suffix="bold.json", **inputs["preproc_bold"].wildcards),
     group:
         "subj"
     script:
         "scripts/smooth.py"
 
-
 rule denoise:
     input:
-        nii=bids(
-            root="denoised",
-            datatype="func",
-            desc="smoothed",
-            fwhm="{fwhm}",
-            suffix="bold.nii.gz",
-            **inputs["preproc_bold"].wildcards
-        ),
-        json=bids(
-            root="denoised",
-            datatype="func",
-            desc="smoothed",
-            fwhm="{fwhm}",
-            suffix="bold.json",
-            **inputs["preproc_bold"].wildcards
-        ),
-        confounds_tsv=inputs["confounds"].path,
-        mask_nii=inputs["preproc_mask"].path,
+        nii  = bids(root="denoised", datatype="func", desc="smoothed", fwhm="{fwhm}",
+                    suffix="bold.nii.gz", **inputs["preproc_bold"].wildcards),
+        json = bids(root="denoised", datatype="func", desc="smoothed", fwhm="{fwhm}",
+                    suffix="bold.json", **inputs["preproc_bold"].wildcards),
+        confounds_tsv = inputs["confounds"].path,
+        mask_nii = inputs["preproc_mask"].path,
     params:
-        confounds_to_use=lambda wildcards: config["confounds"][
+        confounds_to_use = lambda wildcards: config["confounds"][
             int(wildcards.confounds_idx) - 1
         ]["regressors"],
-        confounds_name=lambda wildcards: config["confounds"][
+        confounds_name = lambda wildcards: config["confounds"][
             int(wildcards.confounds_idx) - 1
         ]["name"],
-        standardize=True,
-        detrend=True,
-        low_pass=False,
-        high_pass=False,
+        standardize = True,
+        detrend     = True,
+        low_pass    = False,
+        high_pass   = False,
     output:
-        nii=bids(
-            root="denoised",
-            datatype="func",
-            desc="denoised",
-            fwhm="{fwhm}",
-            confounds="{confounds_idx}",
-            suffix="bold.nii.gz",
-            **inputs["preproc_bold"].wildcards
-        ),
-        json=bids(
-            root="denoised",
-            datatype="func",
-            desc="denoised",
-            fwhm="{fwhm}",
-            confounds="{confounds_idx}",
-            suffix="bold.json",
-            **inputs["preproc_bold"].wildcards
-        ),
+        nii  = bids(root="denoised", datatype="func", desc="denoised", fwhm="{fwhm}", confounds="{confounds_idx}",
+                    suffix="bold.nii.gz", **inputs["preproc_bold"].wildcards),
+        json = bids(root="denoised", datatype="func", desc="denoised", fwhm="{fwhm}", confounds="{confounds_idx}",
+                    suffix="bold.json", **inputs["preproc_bold"].wildcards),
     group:
         "subj"
     script:
         "scripts/denoise.py"
 
 
-rule just_denoise:
-    input:
-        denoised=expand(
-            expand(
-                rules.denoise.output.nii,
-                zip,
-                **inputs["preproc_bold"].zip_lists,
-                allow_missing=True
-            ),
-            fwhm=config["fwhm"],
-            confounds_idx=range(1, len(config["confounds"]) + 1)
-        ),
-    #default_target: True
+# rule just_denoise:
+#     input:
+#         denoised=expand(
+#             expand(
+#                 rules.denoise.output.nii,
+#                 zip,
+#                 **inputs["preproc_bold"].zip_lists,
+#                 allow_missing=True
+#             ),
+#             fwhm=config["fwhm"],
+#             confounds_idx=range(1, len(config["confounds"]) + 1)
+#         ),
+#     #default_target: True
 
+## Generate midthickness rules
 rule extract_from_tar:
     input: 
         tar = config['freesurfer_tar']
@@ -180,10 +134,9 @@ def get_gifti_input (wildcards):
     else:
         return join(config['freesurfer'],'surf','{hemi}.{surfname}'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
         
-
 rule convert_to_gifti:
     input: get_gifti_input
-    output: bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='{surfname}.surf.gii',space='fsaverage')
+    output: bids(root='midthickness', subject='{subject}', hemi='{hemi}', suffix='{surfname}.surf.gii', space='fsaverage')
     params: 
         license = config['fs_license']
     container: config['singularity_freesurfer']
@@ -228,7 +181,7 @@ rule apply_surf_tkr2scanner:
 rule gen_midthickness:
     input:
         white = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='white.surf.gii',space='{space}'),
-        pial = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='pial.surf.gii',space='{space}')
+        pial  = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='pial.surf.gii',space='{space}')
     output: 
         midthickness = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='midthickness.surf.gii',space='{space}')
     container: config['singularity_connectome_workbench']
@@ -237,6 +190,7 @@ rule gen_midthickness:
     group: 'participant1'
     shell: 'wb_command -surface-average {output.midthickness} -surf {input.white} -surf {input.pial} &> {log}'
 
+## Resample 2 surface rules
 rule vol2surf:
     input:
         bold = rules.denoise.output.nii
@@ -272,3 +226,21 @@ rule resample2fsLR:
             hemi=config['hemi']
         )   
     #default_target: True
+
+## Temporal resampling
+rule temporal_resample:
+    input:
+        func = rules.metric_resample.output
+    params:
+        target_TR
+    output:
+        bids()
+
+## Parcellate
+rule parcellate:
+    input:
+        func = rules.temporal_resample.output
+        atlas = ''
+    output:
+
+    script:
