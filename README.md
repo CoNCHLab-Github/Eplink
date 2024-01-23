@@ -67,12 +67,12 @@ bidsBatch <bidsBatch options> <app_name> <bids_dir> <output_dir> <participant/gr
 
 **For running all subjects:**
 ```
-bidsBatch fmriprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MNI152NLin2009cAsym T1w --fs-subjects-path <freesurfer_output_dir>
+bidsBatch fmriprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MNI152NLin2009cAsym T1w --fs-subjects-dir <freesurfer_output_dir>
 ```
 
 - `<bids_dir>` and `<output_dir>` can be relative or absolute paths to raw data and output folder.  
 - fMRIprep option `--output-spaces` is set to generate outputs in both native (`T1w`) and MNI template spaces (`MNI152NLin2009cAsym`).
-- `--fs-subjects-path` is the path to freesurfer output (default: OUTPUT_DIR/freesurfer).
+- `--fs-subjects-dir` is the path to freesurfer output (default: OUTPUT_DIR/freesurfer).
 
 ### Step 3: ISC pipeline
 
