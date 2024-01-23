@@ -67,7 +67,7 @@ bidsBatch <bidsBatch options> <app_name> <bids_dir> <output_dir> <participant/gr
 
 **For running all subjects:**
 ```
-bidsBatch fMRIprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MNI152NLin2009cAsym T1w --fs-subjects-path <freesurfer_output_dir>
+bidsBatch fmriprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MNI152NLin2009cAsym T1w --fs-subjects-path <freesurfer_output_dir>
 ```
 
 - `<bids_dir>` and `<output_dir>` can be relative or absolute paths to raw data and output folder.  
