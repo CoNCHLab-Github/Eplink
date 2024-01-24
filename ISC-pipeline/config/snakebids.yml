@@ -9,15 +9,6 @@ singularity_connectome_workbench: /project/6050199/akhanf/singularity/connectome
 #path to your freesurfer license file:
 fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 
-#path to subject freesurfer dir (containing surf/ and mri/ subfolders) 
-# use the {subject} wildcard here.. 
-#in_freesurfer: /scratch/akhanf/camcan_hcp_mmp_to_native/in_freesurfer/sub-{subject}
-
-#optional: specify tar containing a particular subject'a freesurfer folder
-in_freesurfer: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}'
-in_freesurfer_root: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2'
-in_freesurfer_tar: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}.tar'
-
 #participants_tsv: config/participants.tsv
 
 ---
