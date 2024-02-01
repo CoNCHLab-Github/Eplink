@@ -92,9 +92,9 @@ rule denoise:
         low_pass    = False,
         high_pass   = False,
     output:
-        nii  = bids(root="denoised", datatype="func", desc="denoised", fwhm="{fwhm}", confounds="{confounds_idx}",
+        nii  = bids(root="results/denoised", datatype="func", desc="denoised", fwhm="{fwhm}", confounds="{confounds_idx}",
                     suffix="bold.nii.gz", **inputs["preproc_bold"].wildcards),
-        json = bids(root="denoised", datatype="func", desc="denoised", fwhm="{fwhm}", confounds="{confounds_idx}",
+        json = bids(root="results/denoised", datatype="func", desc="denoised", fwhm="{fwhm}", confounds="{confounds_idx}",
                     suffix="bold.json", **inputs["preproc_bold"].wildcards),
     group:
         "subj"
@@ -146,7 +146,7 @@ rule convert_to_gifti:
 
 rule convert_to_nifti:
     input: join(config['freesurfer'],'mri','{volname}.mgz')
-    output: bids(root='midthickness',subject='{subject}',suffix='{volname}.nii.gz')
+    output: bids(root='results/midthickness',subject='{subject}',suffix='{volname}.nii.gz')
     params: 
         license = config['fs_license']
     container: config['singularity_freesurfer']
@@ -156,9 +156,9 @@ rule convert_to_nifti:
 
 rule get_tkr2scanner:
     input: 
-        t1 = bids(root='midthickness',subject='{subject}',suffix='T1.nii.gz')
+        t1 = bids(root='results/midthickness',subject='{subject}',suffix='T1.nii.gz')
     output:
-        tkr2scanner = bids(root='midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
+        tkr2scanner = bids(root='results/midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
     params: 
         license = config['fs_license']
     container: config['singularity_freesurfer']
@@ -168,10 +168,10 @@ rule get_tkr2scanner:
      
 rule apply_surf_tkr2scanner:
     input: 
-        surf = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='{surfname}.surf.gii',space='fsaverage'),
-        tkr2scanner = bids(root='midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
+        surf = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',suffix='{surfname}.surf.gii',space='fsaverage'),
+        tkr2scanner = bids(root='results/midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
     output: 
-        surf = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='{surfname}.surf.gii')
+        surf = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='{surfname}.surf.gii')
     threads: 8
     container: config['singularity_connectome_workbench']
     log: 'logs/apply_surf_tkr2scanner/sub-{subject}_{hemi}_{surfname}.log'
@@ -180,26 +180,26 @@ rule apply_surf_tkr2scanner:
 
 rule gen_midthickness:
     input:
-        white = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='white.surf.gii',space='{space}'),
-        pial  = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='pial.surf.gii',space='{space}')
+        white = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',suffix='white.surf.gii',space='{space}'),
+        pial  = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',suffix='pial.surf.gii',space='{space}')
     output: 
-        midthickness = bids(root='midthickness',subject='{subject}',hemi='{hemi}',suffix='midthickness.surf.gii',space='{space}')
+        midthickness = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',suffix='midthickness.surf.gii',space='{space}')
     container: config['singularity_connectome_workbench']
     threads: 8
     log: 'logs/gen_midthickness/sub-{subject}_{hemi}_{space}.log'
     group: 'participant1'
     shell: 'wb_command -surface-average {output.midthickness} -surf {input.white} -surf {input.pial} &> {log}'
 
-## Resample 2 surface rules
+## Resample to surface rules
 rule vol2surf:
     input:
         bold = rules.denoise.output.nii
         #config['bold_dir']+"/sub-{subject}/func/sub-{subject}_task-{task}_run-{run}_space-T1w_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.nii.gz",
-        midthickness = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='midthickness.surf.gii'),
-        white        = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='white.surf.gii'),
-        pial         = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
+        midthickness = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='midthickness.surf.gii'),
+        white        = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='white.surf.gii'),
+        pial         = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
     output:
-        bids(root="resampled2fsLR",subject='{subject}',desc='denoised',fwhm='{fwhm}',confounds='{confounds_idx}',hemi='{hemi}',space='native',suffix='bold.func.gii',
+        bids(root="results/resampled2fsLR",subject='{subject}',desc='denoised',fwhm='{fwhm}',confounds='{confounds_idx}',hemi='{hemi}',space='native',suffix='bold.func.gii',
             **inputs["preproc_bold"].wildcards
         )
         #bids(root='resampled2fsLR',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
@@ -210,11 +210,11 @@ rule vol2surf:
 rule metric_resample:
     input:
         vol2surf_out  = rules.vol2surf.output,
-        curr_sphere   = bids(root='midthickness',subject='{subject}',hemi='{hemi}',space='fsaverage',suffix='sphere.reg.surf.gii'),
+        curr_sphere   = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='fsaverage',suffix='sphere.reg.surf.gii'),
         #config['surf_dir']+"/sub-{subject}/sub-{subject}_hemi-{hemi}_space-fsaverage_sphere.reg.surf.gii",
         target_sphere = "resources/standard_mesh_atlases/resample_fsaverage/fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii"
     output:
-        bids(root='resampled2fsLR/32k_space_surfaces',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
+        bids(root='results/resampled2fsLR/32k_space_surfaces',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
         #config['output_dir']+"/32k_space_surfaces/sub-{subject}/sub-{subject}_hemi-{hemi}_task-{task}_run-{run}_space-fsLR_den-32k_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.func.gii"
     shell:
         "wb_command -metric-resample {input.vol2surf_out} {input.curr_sphere} {input.target_sphere} BARYCENTRIC {output}"
@@ -225,22 +225,22 @@ rule resample2fsLR:
             valid_inputs.expand(rules.metric_resample.output, allow_missing=True),
             hemi=config['hemi']
         )   
-    #default_target: True
+    default_target: True
 
-## Temporal resampling
-rule temporal_resample:
-    input:
-        func = rules.metric_resample.output
-    params:
-        target_TR
-    output:
-        bids()
+# ## Temporal resampling
+# rule temporal_resample:
+#     input:
+#         func = rules.metric_resample.output
+#     params:
+#         target_TR
+#     output:
+#         bids()
 
-## Parcellate
-rule parcellate:
-    input:
-        func = rules.temporal_resample.output
-        atlas = ''
-    output:
+# ## Parcellate
+# rule parcellate:
+#     input:
+#         func = rules.temporal_resample.output
+#         atlas = ''
+#     output:
 
-    script:
+#     script:
