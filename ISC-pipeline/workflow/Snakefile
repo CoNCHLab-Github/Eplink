@@ -129,20 +129,21 @@ rule smooth_denoise:
         # using the zip lists to expand over all scans, note use of the zip option in expand:
         denoised = expand(
                     expand(
-                bids(root="results/denoised", datatype="func",
-                    desc="{{desc}}",
-                    fwhm="{{fwhm}}",
-                    confounds="{{confounds_idx}}",
-                    suffix="bold.nii.gz",
-                    **inputs["preproc_bold"].wildcards
-                ),
-                zip,
-                **inputs["preproc_bold"].zip_lists
+                        bids(root="results/denoised",
+                            datatype="func",
+                            desc="{{desc}}",
+                            fwhm="{{fwhm}}",
+                            confounds="{{confounds_idx}}",
+                            suffix="bold.nii.gz",
+                            **inputs["preproc_bold"].wildcards
+                        ),
+                        zip,
+                        **inputs["preproc_bold"].zip_lists
+                    ),
+                fwhm=config["fwhm"],
+                confounds_idx=range(1, len(config["confounds"]) + 1),
+                desc="denoised",
             ),
-            fwhm=config["fwhm"],
-            confounds_idx=range(1, len(config["confounds"]) + 1),
-            desc=["denoised", "AROMAdenoised"],
-        )
 
 ## Generate midthickness rules
 rule extract_from_tar:
@@ -230,19 +231,39 @@ rule generate_midthickness:
 ## Resample to surface rules
 rule vol2surf:
     input:
-        bold = rules.denoise.output.nii,
+        bold = bids(root="results/denoised",
+                    datatype="func",
+                    desc="denoised",
+                    fwhm="{fwhm}",
+                    confounds="{confounds_idx}",
+                    space="T1w",
+                    subject="{subject}",
+                    task="{task}",
+                    run="{run}",
+                    suffix="bold.nii.gz",
+                ),
         #config['bold_dir']+"/sub-{subject}/func/sub-{subject}_task-{task}_run-{run}_space-T1w_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.nii.gz",
-        midthickness = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='midthickness.surf.gii'),
-        white        = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='white.surf.gii'),
-        pial         = bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
+        midthickness = bids(root="results/midthickness",subject="{subject}",hemi="{hemi}",space="native",suffix="midthickness.surf.gii"),
+        white        = bids(root="results/midthickness",subject="{subject}",hemi="{hemi}",space="native",suffix="white.surf.gii"),
+        pial         = bids(root="results/midthickness",subject="{subject}",hemi="{hemi}",space="native",suffix="pial.surf.gii")
     output:
-        bids(root="results/resampled2fsLR",subject='{subject}',desc='denoised',fwhm='{fwhm}',confounds='{confounds_idx}',hemi='{hemi}',space='native',suffix='bold.func.gii',
-            **inputs["preproc_bold"].wildcards
+        bids(root="results/resampled2fsLR",
+            datatype="func",
+            fwhm="{fwhm}",
+            confounds="{confounds_idx}",
+            desc="denoised",
+            hemi="{hemi}",
+            space="native",
+            suffix="bold.func.gii",
+            subject="{subject}",
+            task="{task}",
+            run="{run}"
         )
         #bids(root='resampled2fsLR',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
         #config['output_dir']+"/sub-{subject}/sub-{subject}_hemi-{hemi}_task-{task}_run-{run}_space-native_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.func.gii"
     shell:
         "wb_command -volume-to-surface-mapping {input.bold} {input.midthickness} {output} -ribbon-constrained {input.white} {input.pial}"
+
 
 rule metric_resample:
     input:
@@ -251,22 +272,49 @@ rule metric_resample:
         #config['surf_dir']+"/sub-{subject}/sub-{subject}_hemi-{hemi}_space-fsaverage_sphere.reg.surf.gii",
         target_sphere = "resources/standard_mesh_atlases/resample_fsaverage/fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii"
     output:
-        bids(root='results/resampled2fsLR/32k_space_surfaces',subject='{subject}',hemi='{hemi}',space='native',suffix='pial.surf.gii')
+        bids(root="results/resampled2fsLR/32k_space_surfaces",
+            datatype="func",
+            fwhm="{fwhm}",
+            confounds="{confounds_idx}",
+            desc="denoised",
+            hemi="{hemi}",
+            space="fsLR_den-32k",
+            suffix="bold.func.gii",
+            subject="{subject}",
+            task="{task}",
+            run="{run}"
+        )
         #config['output_dir']+"/32k_space_surfaces/sub-{subject}/sub-{subject}_hemi-{hemi}_task-{task}_run-{run}_space-fsLR_den-32k_desc-denoised_fwhm-{fwhm}_confounds-{conf}_bold.func.gii"
     shell:
         "wb_command -metric-resample {input.vol2surf_out} {input.curr_sphere} {input.target_sphere} BARYCENTRIC {output}"
 
+
+# Dummy rule
 rule resample2fsLR:
     input:
         fsLR = expand(
-                bids(root='results/resampled2fsLR32',subject='{subject}',hemi='{hemi}',space='native',suffix='midthickness.surf.gii'),
-                subject=inputs.subjects,
-                hemi=config['hemi'])
-        expand(
-            valid_inputs.expand(rules.metric_resample.output, allow_missing=True),
-            hemi=config['hemi']
-        ),   
-    default_target: True
+                expand(
+                    bids(root='results/resampled2fsLR/32k_space_surfaces',
+                        datatype="func",
+                        fwhm="{{fwhm}}",
+                        confounds="{{confounds_idx}}",
+                        hemi="{{hemi}}",
+                        space="fsLR_den-32k",
+                        desc="denoised",
+                        suffix="bold.func.gii", 
+                        subject="{subject}",
+                        task="{task}",
+                        run="{run}"
+                    ),
+                    zip,
+                    **inputs["preproc_bold"].zip_lists,
+                    allow_missing=True
+                ),
+                fwhm=config["fwhm"],
+                confounds_idx=range(1, len(config["confounds"]) + 1),
+                hemi=config['hemi']
+            ),
+    #default_target: True
 
 # ## Temporal resampling
 # rule temporal_resample:
