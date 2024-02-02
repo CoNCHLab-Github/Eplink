@@ -1,3 +1,5 @@
+![Static Badge](https://img.shields.io/badge/UWO%20-%20CoNCH?logoColor=%234F2683&label=CoNCH%20lab&labelColor=%238F55E0&color=%234F2683&link=https%3A%2F%2Fwww.conchlab.uwo.ca%2F)
+
 # Eplink
 
 The current repository stores codes used for stimulus presentation and analyzing Eplink data (Phase II, Phase III, and TWH) along with a detailed walkthrough of the preprocesing and analysis.
@@ -102,4 +104,8 @@ You can save the extended output of the dry run to a file for examining later:
 
 ```snakemake -n > dryrun.txt```
 
-#### 
+#### Running the pipeline
+
+1. `regularInteractive`
+2. Load freesurfer module: `module load freesurfer/7.2.0`
+3. `snakemake -c8`
