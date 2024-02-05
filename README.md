@@ -7,20 +7,20 @@ The current repository stores codes used for stimulus presentation and analyzing
 
 ## Datasets
 
-### Phase II
+Raw data is available in BIDS format on Graham (ComputeCanada):
 
-Raw data is available in BIDS format at ComputeCanada:
-`/project/6050199/akhanf/cfmm-bids/data/Peters/tle3T_phase2/`
+| dataset   | path                                                                   | symbolic links                                     |
+|-----------|------------------------------------------------------------------------|----------------------------------------------------|
+| Phase II  | `/project/6050199/akhanf/cfmm-bids/data/Peters/tle3T_phase2/`          | `/project/6050199/alit/EpLink/datasets/eplink-p2`  |
+| Phase III | `/project/6050199/akhanf/cfmm-bids/data/Burneo/EpLinkPhase3_Baseline/` | `/project/6050199/alit/EpLink/datasets/eplink-p3`  |
+| TWH       | `/project/6050199/akhanf/ext-bids/eplink_phase3`                        | `/project/6050199/alit/EpLink/datasets/eplink-twh` |
+
+### Phase II
 
 ### Phase III
 
-Raw data is available in BIDS format at ComputeCanada:
-`/project/6050199/akhanf/cfmm-bids/data/Burneo/EpLinkPhase3_Baseline/`
-
 ### TWH
 
-Raw data is available in BIDS format at ComputeCanada:
-`project/6050199/akhanf/ext-bids/eplink_phase3`
 
 ## Setup
 
