@@ -86,7 +86,9 @@ The inter-subject correlation pipline is implemented using the snakemake workflo
 1. Set up a virtual environment: `python3.9 -m venv ~/venv-eplink`
 2. Activate the environment: `source ~/venv-eplink/bin/activate`
 3. Update pip: `pip install --upgrade pip`
-4. Install snakebids: `pip install snakebids`
+4. Install dependencies: `pip install -r requirements.txt`
+
+You can find the `requirements.txt` file in this repository. 
 
 #### Dry run
 Make sure you have activated the virtual environment:
