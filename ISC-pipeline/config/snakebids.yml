@@ -1,5 +1,3 @@
-# hcp-mmp configs
-
 singularity_freesurfer: /project/6050199/akhanf/singularity/bids-apps/freesurfer_7.2.0_withsubfields.sif
 #singularity_freesurfer: docker://bids/freesurfer:v6.0.1-5
 singularity_connectome_workbench: /project/6050199/akhanf/singularity/connectome-workbench_latest.simg
@@ -9,6 +7,16 @@ singularity_connectome_workbench: /project/6050199/akhanf/singularity/connectome
 fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 
 # #participants_tsv: config/participants.tsv
+
+# Smoothing configs
+fwhm:
+  - 0
+  - 5
+  - 10
+
+# Temporal resampling configs
+original_TR: 1.25 
+target_TR: 2
 
 # ---
 # # Denoise configs
@@ -24,11 +32,6 @@ fMRIprep_dir: '/project/6050199/alit/EpLink/eplink-p3-fMRIprep-freesurfer'
 hemi:
   - L
   - R
-
-fwhm:
-  - 0
-  - 5
-  - 10
 
 # derivatives: false
 # # can alternatively have paths to derivatives folders
@@ -272,7 +275,7 @@ confounds: &confounds
       - std_dvars
 
 
-# these are the command-line parameters
+# command-line parameters (snakebids app)
 parse_args:
 
   --bids_dir:
