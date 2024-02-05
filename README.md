@@ -1,4 +1,5 @@
-![Static Badge](https://img.shields.io/badge/UWO%20-%20CoNCH?logoColor=%234F2683&label=CoNCH%20lab&labelColor=%238F55E0&color=%234F2683&link=https%3A%2F%2Fwww.conchlab.uwo.ca%2F)
+![Static Badge](https://img.shields.io/badge/UWO%20-%20CoNCH?logoColor=%234F2683&label=CoNCH%20lab&labelColor=%238F55E0&color=%234F2683&link=www.conchlab.uwo.ca)
+
 
 # Eplink
 
@@ -109,3 +110,13 @@ You can save the extended output of the dry run to a file for examining later:
 1. `regularInteractive`
 2. Load freesurfer module: `module load freesurfer/7.2.0`
 3. `snakemake -c8`
+
+If snakemake stops unexpectedly (e.g., due to job running out of time, or power outage) you'll get the following error indicating that the directory is already locked by an instance of snakemake:
+
+```
+LockException:
+Error: Directory cannot be locked. Please make sure that no other Snakemake process is trying to create the same files in the following directory:
+/project/6050199/alit/EpLink/Eplink/ISC-pipeline
+If you are sure that no other instances of snakemake are running on this directory, the remaining lock was likely caused by a kill signal or a power loss. It can be removed with the --unlock argument.
+```
+As mentioned in the message above, if you are sure that no other snakemake instance is running in this directory you can unlock it by `snakemake --unlock` first and then run snakemake as per usual.
