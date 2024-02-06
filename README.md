@@ -5,6 +5,14 @@
 
 The current repository stores codes used for stimulus presentation and analyzing Eplink data (Phase II, Phase III, and TWH) along with a detailed walkthrough of the preprocesing and analysis.
 
+**Table of Contents**
+- [Datasets](#datasets)
+- [Setup](#setup)
+- [Preprocessing](#preprocessing)
+    - [Step 1: freesurfer 7.2](#step1)
+    - [Step 2: fMRIprep 20.2.6](#step2)
+    - [Step 3: ISC pipeline (snakemake)](#step3)
+
 ## Datasets
 
 Raw data is available in BIDS format on Graham (ComputeCanada):
@@ -21,7 +29,7 @@ Raw data is available in BIDS format on Graham (ComputeCanada):
 
 ### TWH
 
-
+---
 ## Setup
 
 ### computecanada
@@ -34,7 +42,9 @@ Raw data is available in BIDS format on Graham (ComputeCanada):
 
 ## Preprocessing
 
-### Step 1: freesurfer 7.2
+<div id="step1"/>
+
+### Step 1: freesurfer 7.2 
 
 Datasets were analyzed in **freesurfer** version **7.2**. `regularBatch` from [neuroglia-helpers](https://github.com/khanlab/neuroglia-helpers) was used to submit recon-all jobs for each participant to compute canada.
 
@@ -57,6 +67,8 @@ regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"path/to/bids path/to/o
 - `-j 8core32gb12h`: specifies job template for each participant (8 cores, 32GB RAM, 12 hours)
 
 
+---
+<div id="step2"/>
 
 ### Step 2: fMRIprep 20.2.6
 Datasets were preprocessed by the **fMRIprep** pipeline version **20.2.6**. `bidsBatch` from [neuroglia-helpers](https://github.com/khanlab/neuroglia-helpers) was used to submit fMRIprep jobs for each participant to compute canada. 
@@ -77,15 +89,14 @@ bidsBatch fmriprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MN
 - fMRIprep option `--output-spaces` is set to generate outputs in both native (`T1w`) and MNI template spaces (`MNI152NLin2009cAsym`).
 - `--fs-subjects-dir` is the path to freesurfer output (default: OUTPUT_DIR/freesurfer).
 
+---
+<div id="step3"/>
+
 ### Step 3: ISC pipeline (snakemake)
 
 The inter-subject correlation pipline is implemented using the snakemake workflow available in this repository.
 
-<object data="ISC-pipeline/dag.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="ISC-pipeline/dag.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="ISC-pipeline/dag.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
+![Alt text](./ISC-pipeline/dag.svg)
 
 #### Setting up python virtual environment
 
