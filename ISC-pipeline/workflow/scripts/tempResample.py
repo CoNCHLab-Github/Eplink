@@ -1,4 +1,4 @@
-import nibable as nib
+import nibabel as nib
 import numpy as np
 #from snakebids import write_derivative_json
 from scipy.signal import resample, resample_poly
@@ -25,8 +25,9 @@ def ts_resample(timeseries, TR_new, TR_org=None, time=None, method='poly', axis=
     time_resampled = np.arange(0, n_tp*TR_org, TR_new)
     return ts_resampled, time_resampled
 
+
 # load surface file to resample
-func_gii = nib.load(snakemake.input.func)
+func_gii = nib.load(snakemake.input[0])
 data = np.vstack([d.data for d in func_gii.darrays])
 
 # get specified target abd original TRs
@@ -42,5 +43,5 @@ gii_darray = nib.gifti.GiftiDataArray(data=data_resampled.astype('float32'), int
 # Create a GIFTI image 
 gii_image = nib.gifti.GiftiImage(darrays=[gii_darray])
 # Save GIFTI image
-nib.save(gii_image, snakemake.output.temp_resampled)
+nib.save(gii_image, snakemake.output[0])
 
