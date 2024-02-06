@@ -157,9 +157,14 @@ rule extract_from_tar:
     group: 'participant1'
     shell: 'mkdir -p {params.out_folder} && tar -C {params.out_folder} --extract --file={input.tar} {params.file_in_tar}'
 
-
+def get_gifti_input (wildcards):
+    if wildcards.surfname == 'pial': #add .T1 to the name (since pial is a symlink to pial.T1) so can use if extracting from tar
+        return join(config['freesurfer'],'surf','{hemi}.{surfname}.T1'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
+    else:
+        return join(config['freesurfer'],'surf','{hemi}.{surfname}'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
+        
 rule convert_to_gifti:
-    input: lambda wildcards: join(config['freesurfer'],'surf','{hemi}.{surfname}'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
+    input: get_gifti_input
     output: bids(root='results/midthickness', subject='{subject}', hemi='{hemi}', suffix='{surfname}.surf.gii', space='fsaverage')
     params: 
         license = config['fs_license']
@@ -293,19 +298,7 @@ rule metric_resample:
 rule resample2fsLR:
     input:
         fsLR = expand(
-                expand(
-                    bids(root='results/resampled2fsLR/32k_space_surfaces',
-                        datatype="func",
-                        fwhm="{{fwhm}}",
-                        confounds="{{confounds_idx}}",
-                        hemi="{{hemi}}",
-                        space="fsLR_den-32k",
-                        desc="denoised",
-                        suffix="bold.func.gii", 
-                        subject="{subject}",
-                        task="{task}",
-                        run="{run}"
-                    ),
+                expand(rules.metric_resample.output,
                     zip,
                     **inputs["preproc_bold"].zip_lists,
                     allow_missing=True
@@ -316,14 +309,44 @@ rule resample2fsLR:
             ),
     #default_target: True
 
-# ## Temporal resampling
-# rule temporal_resample:
-#     input:
-#         func = rules.metric_resample.output
-#     params:
-#         target_TR
-#     output:
-#         bids()
+
+## Temporal resampling
+rule temp_resample:
+    input:
+        func = rules.metric_resample.output
+    params:
+        original_TR = config['original_TR'],
+        target_TR = config['target_TR']
+    output:
+        bids(root="results/temporalResampled",
+            datatype="func",
+            fwhm="{fwhm}",
+            confounds="{confounds_idx}",
+            desc="denoised",
+            hemi="{hemi}",
+            space="fsLR_den-32k",
+            suffix="bold.func.gii",
+            subject="{subject}",
+            task="{task}",
+            run="{run}"
+        )
+    script:
+        "scripts/tempResample.py"
+
+# Dummy rule
+rule temporal_resample:
+    input:
+        fsLR = expand(
+                expand(rules.temp_resample.output,
+                    zip,
+                    **inputs["preproc_bold"].zip_lists,
+                    allow_missing=True
+                ),
+                fwhm=config["fwhm"],
+                confounds_idx=range(1, len(config["confounds"]) + 1),
+                hemi=config['hemi']
+            ),
+    default_target: True
 
 # ## Parcellate
 # rule parcellate:
