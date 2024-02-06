@@ -81,6 +81,12 @@ bidsBatch fmriprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MN
 
 The inter-subject correlation pipline is implemented using the snakemake workflow available in this repository.
 
+<object data="ISC-pipeline/dag.pdf" type="application/pdf" width="700px" height="700px">
+    <embed src="ISC-pipeline/dag.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="ISC-pipeline/dag.pdf">Download PDF</a>.</p>
+    </embed>
+</object>
+
 #### Setting up python virtual environment
 
 1. Set up a virtual environment: `python3.9 -m venv ~/venv-eplink`
