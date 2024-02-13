@@ -29,10 +29,20 @@ Raw data is available in BIDS format on Graham (ComputeCanada):
 
 ### TWH
 
----
 ## Setup
 
 ### computecanada
+
+#### checking the submitted jobs and their status
+
+use `squeue` or `sq` command to list Slurm jobs. `squeue` supplies information about all jobs in the system, by default. You can use the shorter `sq` to list only your own jobs. Find more details [here](https://docs.alliancecan.ca/wiki/Running_jobs#Use_squeue_or_sq_to_list_jobs).
+
+<div id="sshfs"/>
+
+#### mounting compute canada as a file system using sshfs:
+1. create a directory for the mount if you don't have one: `mkdir ~/Graham`
+2. use sshfs to mount as a directory on computecanada file system: ```sshfs <username>@graham.computecanada.ca:/home/<username>/projects/ctb-akhanf/<username> ~/Graham```
+3. You will be asked for youe password and 2FA if applicable.
 
 ### neuroglia-helpers
 
@@ -89,6 +99,9 @@ bidsBatch fmriprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MN
 - fMRIprep option `--output-spaces` is set to generate outputs in both native (`T1w`) and MNI template spaces (`MNI152NLin2009cAsym`).
 - `--fs-subjects-dir` is the path to freesurfer output (default: OUTPUT_DIR/freesurfer).
 
+#### Reviewing fMRIprep reports:
+To pull the fMRIprep reports properly on your local machine to review run the `fetch_fMRIprep_reports.sh` script (included in the repository). You might need to adjust the fMRIprep output path in the script. This script assumes that graham is mounted as a file system at `~/Graham`, if it isn't check [here](#sshfs) for instructions.
+
 ---
 <div id="step3"/>
 
@@ -130,7 +143,7 @@ You can save the extended output of the dry run to a file for examining later:
 2. Load freesurfer module: `module load freesurfer/7.2.0`
 3. `snakemake -c8`
 
-If snakemake stops unexpectedly (e.g., due to job running out of time, or power outage) you'll get the following error indicating that the directory is already locked by an instance of snakemake:
+If snakemake had stopped unexpectedly (e.g., due to job running out of time, or power outage) you'll get the following error indicating that the directory is already locked by an instance of snakemake:
 
 ```
 LockException:
@@ -138,4 +151,4 @@ Error: Directory cannot be locked. Please make sure that no other Snakemake proc
 /project/6050199/alit/EpLink/Eplink/ISC-pipeline
 If you are sure that no other instances of snakemake are running on this directory, the remaining lock was likely caused by a kill signal or a power loss. It can be removed with the --unlock argument.
 ```
-As mentioned in the message above, if you are sure that no other snakemake instance is running in this directory you can unlock it by `snakemake --unlock` first and then run snakemake as per usual.
+As mentioned in the message above, if you are sure that no other snakemake instance is running in this directory you can unlock it by `snakemake --unlock` first, and then run snakemake as per usual.
