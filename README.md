@@ -137,6 +137,9 @@ You can save the extended output of the dry run to a file for examining later:
 
 ```snakemake -n > dryrun.txt```
 
+#### Generate a dag of rules (visualize the pipeline) 
+```snakemake --forceall --rulegraph | dot -Tsvg > dag.svg```
+
 #### Running the pipeline
 
 1. `regularInteractive`
