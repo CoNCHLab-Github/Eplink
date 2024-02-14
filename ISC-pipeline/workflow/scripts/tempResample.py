@@ -28,7 +28,7 @@ def ts_resample(timeseries, TR_new, TR_org=None, time=None, method='poly', axis=
 
 # load surface file to resample
 func_gii = nib.load(snakemake.input[0])
-data = np.vstack([d.data for d in func_gii.darrays])
+data = np.vstack([d.data for d in func_gii.darrays]).T
 
 # get specified target abd original TRs
 TR_new = snakemake.params.target_TR
