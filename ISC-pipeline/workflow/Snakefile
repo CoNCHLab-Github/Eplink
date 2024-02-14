@@ -110,7 +110,7 @@ rule denoise:
 
 
 # Dummy rules
-rule just_denoise:
+rule just_denoise_all:
     input:
         denoised=expand(
             expand(
@@ -124,7 +124,7 @@ rule just_denoise:
         )
 
 
-rule smooth_denoise:
+rule smooth_denoise_all:
     input:
         # using the zip lists to expand over all scans, note use of the zip option in expand:
         denoised = expand(
@@ -225,7 +225,7 @@ rule gen_midthickness:
 
 
 # Dummy rule
-rule generate_midthickness:
+rule gen_midthickness_all:
     input:
         midthickness = expand(
                         bids(root='results/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='midthickness.surf.gii'),
@@ -295,7 +295,7 @@ rule metric_resample:
 
 
 # Dummy rule
-rule resample2fsLR:
+rule resample2fsLR_all:
     input:
         fsLR = expand(
                 expand(rules.metric_resample.output,
@@ -334,7 +334,7 @@ rule temp_resample:
         "scripts/tempResample.py"
 
 # Dummy rule
-rule temporal_resample:
+rule temp_resample_all:
     input:
         fsLR = expand(
                 expand(rules.temp_resample.output,
@@ -346,13 +346,49 @@ rule temporal_resample:
                 confounds_idx=range(1, len(config["confounds"]) + 1),
                 hemi=config['hemi']
             ),
+    # default_target: True
+
+## Parcellate
+rule parcellate:
+    input:
+        func = bids(root="results/temporalResampled",
+            datatype="func",
+            fwhm=0,
+            confounds="{confounds_idx}",
+            desc="denoised",
+            hemi="{hemi}",
+            space="fsLR_den-32k",
+            suffix="bold.func.gii",
+            subject="{subject}",
+            task="{task}",
+            run="{run}"
+        ),
+        atlas = "resources/atlases_fsLR_32K/{atlas}.32k.{hemi}.label.gii"
+    output:
+        h5 = bids(root="results/parcellated/{atlas}",
+            datatype="func",
+            subject="{subject}",
+            task="{task}",
+            run="{run}",
+            confounds="{confounds_idx}",
+            hemi="{hemi}",
+            suffix="bold.func.h5"
+        )
+    script:
+        "scripts/surfParcellate.py"
+
+
+# Dummy rule
+rule parcellate_all:
+    input:
+        parcellate = expand(
+                expand(rules.parcellate.output.h5,
+                    zip,
+                    **inputs["preproc_bold"].zip_lists,
+                    allow_missing=True
+                ),
+                confounds_idx=range(1, len(config["confounds"]) + 1),
+                hemi=config["hemi"],
+                atlas=config["parcellations"]
+            ),
     default_target: True
-
-# ## Parcellate
-# rule parcellate:
-#     input:
-#         func = rules.temporal_resample.output
-#         atlas = ''
-#     output:
-
-#     script:
