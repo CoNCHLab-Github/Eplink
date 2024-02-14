@@ -11,9 +11,6 @@ func_data = np.vstack([darray.data for darray in func_gii.darrays])
 label_data = label_gii.darrays[0].data
 label_table = label_gii.labeltable.get_labels_as_dict()
 
-print(func_data.shape)
-print(label_data.shape)
-
 # Get parcels from the label table
 ROIs = label_table.keys()
 
