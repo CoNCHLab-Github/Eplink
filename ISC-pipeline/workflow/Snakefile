@@ -391,4 +391,21 @@ rule parcellate_all:
                 hemi=config["hemi"],
                 atlas=config["parcellations"]
             ),
-    default_target: True
+    #default_target: True
+
+## pair-wise ISC
+rule pw_ISC:
+    input:
+        func = expand(
+                expand(rules.parcellate.output.h5,
+                    zip,
+                    **inputs["preproc_bold"].zip_lists,
+                    allow_missing=True
+                ),
+                atlas="Glasser_2016",#config["parcellations"],
+                allow_missing=True
+            )
+    output:
+        h5 = "results/pwISC/pwISC_task-{task}_hemi-{hemi}_confounds-{confounds_idx}.h5"
+    script:
+        "scripts/pwISC.py"
