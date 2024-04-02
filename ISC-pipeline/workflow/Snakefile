@@ -351,7 +351,7 @@ rule temp_resample_all:
 ## Parcellate
 rule parcellate:
     input:
-        func = bids(root="results/temporalResampled",
+        func = bids(root="results/{source}",
             datatype="func",
             fwhm=0,
             confounds="{confounds_idx}",
@@ -365,7 +365,7 @@ rule parcellate:
         ),
         atlas = "resources/atlases_fsLR_32K/{atlas}.32k.{hemi}.label.gii"
     output:
-        h5 = bids(root="results/parcellated/{atlas}",
+        h5 = bids(root="/scratch/alit/results/{source}-parcellated/{atlas}", ## disk quota exceeded changed to test
             datatype="func",
             subject="{subject}",
             task="{task}",
@@ -379,7 +379,7 @@ rule parcellate:
 
 
 # Dummy rule
-rule parcellate_all:
+rule parcellate_resampled_all:
     input:
         parcellate = expand(
                 expand(rules.parcellate.output.h5,
@@ -387,6 +387,22 @@ rule parcellate_all:
                     **inputs["preproc_bold"].zip_lists,
                     allow_missing=True
                 ),
+                source="temporalResampled",
+                confounds_idx=range(1, len(config["confounds"]) + 1),
+                hemi=config["hemi"],
+                atlas=config["parcellations"]
+            ),
+    default_target: True
+
+rule parcellate_original_all:
+    input:
+        parcellate = expand(
+                expand(rules.parcellate.output.h5,
+                    zip,
+                    **inputs["preproc_bold"].zip_lists,
+                    allow_missing=True
+                ),
+                source="resampled2fsLR/32k_space_surfaces",
                 confounds_idx=range(1, len(config["confounds"]) + 1),
                 hemi=config["hemi"],
                 atlas=config["parcellations"]
