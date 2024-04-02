@@ -30,18 +30,20 @@ def ts_resample(timeseries, TR_new, TR_org=None, time=None, method='poly', axis=
 func_gii = nib.load(snakemake.input[0])
 data = np.vstack([d.data for d in func_gii.darrays]).T
 
-# get specified target abd original TRs
+# get specified target and original TRs
 TR_new = snakemake.params.target_TR
 TR_org = snakemake.params.original_TR
 
 # resample the functional data
 data_resampled, _ = ts_resample(data, TR_new, TR_org)
 
-# save to gifti
-# Create a GIFTI data array
-gii_darray = nib.gifti.GiftiDataArray(data=data_resampled.astype('float32'), intent=nib.nifti1.intent_codes['NIFTI_INTENT_TIMESERIES'])
-# Create a GIFTI image 
-gii_image = nib.gifti.GiftiImage(darrays=[gii_darray])
-# Save GIFTI image
-nib.save(gii_image, snakemake.output[0])
+# save to gifti (keeping the input structure, only modifying data)
+# initiallize the new darrays
+darrays = list()
+for ts in range(data_resampled.shape[1]):
+    # create a GIFTI data array and add to darrays
+    darrays.append(nib.gifti.GiftiDataArray(data=np.squeeze(data_resampled[:,ts].astype('float32')))) # No intent code has specified (may want to use normal)
+func_gii.darrays = darrays
+# save GIFTI image to output
+nib.save(func_gii, snakemake.output[0])
 
