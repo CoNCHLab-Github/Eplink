@@ -8,6 +8,7 @@ label_gii = nib.load(snakemake.input.atlas)
 
 # Extract the data arrays from the loaded GIfTI files
 func_data = np.vstack([darray.data for darray in func_gii.darrays])
+(n_t, n_v) = func_data.shape # get number of time samples and vertices
 label_data = label_gii.darrays[0].data
 label_table = label_gii.labeltable.get_labels_as_dict()
 
@@ -15,7 +16,7 @@ label_table = label_gii.labeltable.get_labels_as_dict()
 ROIs = label_table.keys()
 
 # Initialize a list to hold the parcellated functional data
-parcellated_data = np.zeros((len(ROIs),func_data.shape[1]))
+parcellated_data = np.zeros((len(ROIs),n_t))
 
 # Parcellate the functional data
 for roi in ROIs:
@@ -23,7 +24,7 @@ for roi in ROIs:
     vertices_in_parcel = np.where(label_data == roi)[0]
     
     # Extract the functional data for these vertices and average across vertices
-    parcel_time_series = np.mean(func_data[vertices_in_parcel, :], axis=0)
+    parcel_time_series = np.mean(func_data[:,vertices_in_parcel], axis=-1)
     
     # Append the averaged time series to the parcellated data list
     parcellated_data[roi,:] = parcel_time_series
