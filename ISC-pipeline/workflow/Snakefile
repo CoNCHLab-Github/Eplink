@@ -365,7 +365,7 @@ rule parcellate:
         ),
         atlas = "resources/atlases_fsLR_32K/{atlas}.32k.{hemi}.label.gii"
     output:
-        h5 = bids(root="/scratch/alit/results/{source}-parcellated/{atlas}", ## disk quota exceeded changed to test
+        h5 = bids(root="results/{source}-parcellated/{atlas}", ## disk quota exceeded changed to test
             datatype="func",
             subject="{subject}",
             task="{task}",
@@ -392,7 +392,7 @@ rule parcellate_resampled_all:
                 hemi=config["hemi"],
                 atlas=config["parcellations"]
             ),
-    default_target: True
+    # default_target: True
 
 rule parcellate_original_all:
     input:
@@ -407,21 +407,29 @@ rule parcellate_original_all:
                 hemi=config["hemi"],
                 atlas=config["parcellations"]
             ),
-    #default_target: True
+    # default_target: True
 
 ## pair-wise ISC
-rule pw_ISC:
-    input:
-        func = expand(
+def ISC_gen_inputs(wildcards):
+    if wildcards.resampled == 'Y':
+        source = 'temporalResampled'
+    else:
+        source = 'test'
+
+    return expand(
                 expand(rules.parcellate.output.h5,
                     zip,
                     **inputs["preproc_bold"].zip_lists,
                     allow_missing=True
                 ),
-                atlas="Glasser_2016",#config["parcellations"],
+                source = source,
                 allow_missing=True
             )
+
+rule pw_ISC:
+    input:
+        func = ISC_gen_inputs
     output:
-        h5 = "results/pwISC/pwISC_task-{task}_hemi-{hemi}_confounds-{confounds_idx}.h5"
+        h5 = "results/pwISC/pwISC_task-{task}_hemi-{hemi}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5"
     script:
         "scripts/pwISC.py"
