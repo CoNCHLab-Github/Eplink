@@ -414,17 +414,23 @@ def ISC_gen_inputs(wildcards):
     if wildcards.resampled == 'Y':
         source = 'temporalResampled'
     else:
-        source = 'test'
+        source = 'resampled2fsLR/32k_space_surfaces'
 
-    return expand(
-                expand(rules.parcellate.output.h5,
-                    zip,
-                    **inputs["preproc_bold"].zip_lists,
-                    allow_missing=True
+    ins = expand(
+                bids(root=f"results/{source}-parcellated/{wildcards.atlas}", ## disk quota exceeded changed to test
+                    datatype="func",
+                    subject="{subject}",
+                    task="{task}",
+                    run="{run}",
+                    confounds=wildcards.confounds_idx,
+                    hemi=wildcards.hemi,
+                    suffix="bold.func.h5"
                 ),
-                source = source,
+                zip,
+                **inputs["preproc_bold"].zip_lists,
                 allow_missing=True
             )
+    return ins
 
 rule pw_ISC:
     input:
@@ -433,3 +439,16 @@ rule pw_ISC:
         h5 = "results/pwISC/pwISC_task-{task}_hemi-{hemi}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5"
     script:
         "scripts/pwISC.py"
+
+# Dumy rule
+rule pw_ISC_movie:
+    input: 
+        expand(rules.pw_ISC.output.h5,
+            task="movie",
+            hemi=config["hemi"],
+            confounds_idx=1,
+            resampled=['N'],
+            atlas=config["parcellations"]
+        )
+
+    default_target: True
