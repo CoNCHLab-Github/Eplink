@@ -410,11 +410,28 @@ rule parcellate_original_all:
     # default_target: True
 
 ## pair-wise ISC
+def subject_id_filter(bidscomp):
+    zip_lists = bidscomp.zip_lists
+    ind = [i for i,s in enumerate(zip_lists['subject']) if int(s)<1000]
+    filtered_zip_lists = dict()
+    for k,v in zip_lists.items():
+        filtered_zip_lists[k] = [v[i] for i in ind]
+    
+    filtered = snakebids.BidsComponent('filtered_by_subject', bidscomp.path, filtered_zip_lists)
+    # Assuming subject IDs are formatted as 'sub-XXXX'
+    #subject_num = int(subject.replace('sub-', ''))
+    return filtered
+
 def ISC_gen_inputs(wildcards):
     if wildcards.resampled == 'Y':
         source = 'temporalResampled'
     else:
         source = 'resampled2fsLR/32k_space_surfaces'
+
+    if hasattr(wildcards, "group"):
+        filtered = subject_id_filter(inputs["preproc_bold"])
+    else:
+        filtered = inputs["preproc_bold"]
 
     ins = expand(
                 bids(root=f"results/{source}-parcellated/{wildcards.atlas}", ## disk quota exceeded changed to test
@@ -427,7 +444,7 @@ def ISC_gen_inputs(wildcards):
                     suffix="bold.func.h5"
                 ),
                 zip,
-                **inputs["preproc_bold"].zip_lists,
+                **filtered.zip_lists,
                 allow_missing=True
             )
     return ins
@@ -445,6 +462,29 @@ rule pw_ISC_movie:
     input: 
         expand(rules.pw_ISC.output.h5,
             task="movie",
+            hemi=config["hemi"],
+            confounds_idx=1,
+            resampled=['N'],
+            atlas=config["parcellations"]
+        )
+
+    # default_target: True
+
+## leave-one-out ISC
+rule loo_ISC:
+    input:
+        func = ISC_gen_inputs
+    output:
+        h5 = "results/looISC/{group}/looISC_task-{task}_hemi-{hemi}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5"
+    script:
+        "scripts/looISC.py"
+
+# Dumy rule
+rule loo_ISC_movie:
+    input: 
+        expand(rules.loo_ISC.output.h5,
+            task="movie",
+            group="control",
             hemi=config["hemi"],
             confounds_idx=1,
             resampled=['N'],
