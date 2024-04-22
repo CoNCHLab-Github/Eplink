@@ -76,6 +76,16 @@ regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"path/to/bids path/to/o
 - `-a "\"path/to/bids path/to/output\""`: passes both bids and output directories to the script as one argument (space seperated).
 - `-j 8core32gb12h`: specifies job template for each participant (8 cores, 32GB RAM, 12 hours)
 
+<details>
+<summary>
+
+**Example command for phase II**
+</summary>
+
+```
+regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"/project/6050199/akhanf/cfmm-bids/data/Peters/tle3T_phase2/bids /scratch/alit/eplink-p2-freesurfer\"" -j 8core32gb12h
+```
+</details>
 
 ---
 <div id="step2"/>
