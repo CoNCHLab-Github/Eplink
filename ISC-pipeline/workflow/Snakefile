@@ -412,14 +412,12 @@ rule parcellate_original_all:
 ## pair-wise ISC
 def subject_id_filter(bidscomp):
     zip_lists = bidscomp.zip_lists
-    ind = [i for i,s in enumerate(zip_lists['subject']) if int(s)<1000]
+    ind = [i for i,s in enumerate(zip_lists['subject']) if int(s)>5000]
     filtered_zip_lists = dict()
     for k,v in zip_lists.items():
         filtered_zip_lists[k] = [v[i] for i in ind]
     
     filtered = snakebids.BidsComponent('filtered_by_subject', bidscomp.path, filtered_zip_lists)
-    # Assuming subject IDs are formatted as 'sub-XXXX'
-    #subject_num = int(subject.replace('sub-', ''))
     return filtered
 
 def ISC_gen_inputs(wildcards):
