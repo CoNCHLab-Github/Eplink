@@ -10,7 +10,7 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 
 # Dataset to process
 dataset:
-  - phaseII
+  - eplink-p2
 
 # Parcellation configs
 parcellations:
@@ -33,11 +33,11 @@ target_TR: 2
 # # Denoise configs
 # search_terms: {}
 # #optional: specify tar containing a particular subject'a freesurfer folder
-freesurfer: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}'
-freesurfer_root: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2'
-freesurfer_tar: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}.tar'
+freesurfer: '/project/6050199/alit/EpLink/{dataset}-freeSurfer/freesurfer_7.2/sub-{subject}'
+freesurfer_root: '/project/6050199/alit/EpLink/{dataset}-freeSurfer/freesurfer_7.2'
+freesurfer_tar: '/project/6050199/alit/EpLink/{dataset}-freeSurfer/freesurfer_7.2/sub-{subject}.tar'
 
-fMRIprep_dir: '/project/6050199/alit/EpLink/eplink-p3-fMRIprep-freesurfer'
+fMRIprep_dir: '/project/6050199/alit/EpLink/{dataset}-fMRIprep-freesurfer'
 # output_dir: '/project/6050199/alit/EpLink/phase3'
 
 hemi:
