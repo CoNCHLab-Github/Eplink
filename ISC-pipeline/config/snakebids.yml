@@ -8,12 +8,16 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 
 # #participants_tsv: config/participants.tsv
 
+# Dataset to process
+dataset:
+  - phaseII
+
 # Parcellation configs
 parcellations:
   - Desikan
   - Glasser_2016
-  - Schaefer_2018/Schaefer2018_17Networks_400
-
+  - Schaefer2018_17Networks_400
+  - Yan2023_17Networks_400
 
 # Smoothing configs
 fwhm:
