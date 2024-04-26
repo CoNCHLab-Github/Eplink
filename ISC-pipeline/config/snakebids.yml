@@ -9,8 +9,7 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 # #participants_tsv: config/participants.tsv
 
 # Dataset to process
-dataset:
-  - eplink-p2
+dataset: eplink-p2
 
 # Parcellation configs
 parcellations:
@@ -26,6 +25,10 @@ fwhm:
   - 10
 
 # Temporal resampling configs
+resampling:
+  - N
+# - Y
+
 original_TR: 1.25 
 target_TR: 2
 
@@ -33,9 +36,9 @@ target_TR: 2
 # # Denoise configs
 # search_terms: {}
 # #optional: specify tar containing a particular subject'a freesurfer folder
-freesurfer: '/project/6050199/alit/EpLink/{dataset}-freeSurfer/freesurfer_7.2/sub-{subject}'
-freesurfer_root: '/project/6050199/alit/EpLink/{dataset}-freeSurfer/freesurfer_7.2'
-freesurfer_tar: '/project/6050199/alit/EpLink/{dataset}-freeSurfer/freesurfer_7.2/sub-{subject}.tar'
+freesurfer: '/project/6050199/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2/sub-{subject}'
+freesurfer_root: '/project/6050199/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2'
+freesurfer_tar: '/project/6050199/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2/sub-{subject}.tar'
 
 fMRIprep_dir: '/project/6050199/alit/EpLink/{dataset}-fMRIprep-freesurfer'
 # output_dir: '/project/6050199/alit/EpLink/phase3'
@@ -69,7 +72,7 @@ pybids_inputs:
       # scope: derivatives    # raw, derivatives (or can be pipeline name too!)
       # invalid_filters: allow
       datatype: func
-      # run: true
+      run: true
     wildcards:
       - subject
       - session
@@ -86,7 +89,7 @@ pybids_inputs:
       extension: .nii.gz
       #scope: derivatives    # raw, derivatives (or can be pipeline name too!)
       datatype: func
-      # run: true
+      run: true
     wildcards:
       - subject
       - session
@@ -102,7 +105,7 @@ pybids_inputs:
       desc: confounds
       extension: .tsv
       #scope: derivatives    # raw, derivatives (or can be pipeline name too!)
-      # run: true
+      run: true
     wildcards:
       - subject
       - session
