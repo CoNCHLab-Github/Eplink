@@ -11,7 +11,7 @@ H_to_hemi = dict({'L': 'lh', 'R': 'rh'})
 
 # writes inputs_config.yml and updates config dict
 inputs = snakebids.generate_inputs(
-    bids_dir=config["fMRIprep_dir"],
+    bids_dir=config["fMRIprep_dir"].format(dataset=config["dataset"]),
     pybids_inputs=config["pybids_inputs"],
     pybids_config=["bids", "derivatives"],
     # derivatives=config["derivatives"],
@@ -130,7 +130,7 @@ rule smooth_denoise_all:
         # using the zip lists to expand over all scans, note use of the zip option in expand:
         denoised = expand(
                     expand(
-                        bids(root="results/{dataset}/denoised",
+                        bids(root="results/{{dataset}}/denoised",
                             datatype="func",
                             desc="{{desc}}",
                             fwhm="{{fwhm}}",
@@ -150,20 +150,20 @@ rule smooth_denoise_all:
 ## Generate midthickness rules
 rule extract_from_tar:
     input: 
-        tar = config['freesurfer_tar']
+        tar = config['freesurfer_tar'].format(dataset=config["dataset"], subject='{subject}')
     params:
-        out_folder = config['freesurfer_root'],
+        out_folder = config['freesurfer_root'].format(dataset=config["dataset"]),
         file_in_tar = 'sub-{subject}/{modality}/{filename}'
     output: 
-        filename = join(config['freesurfer'],'{modality,surf|mri}','{filename}')
+        filename = join(config['freesurfer'].format(dataset=config["dataset"], subject='{subject}'),'{modality,surf|mri}','{filename}')
     group: 'participant1'
     shell: 'mkdir -p {params.out_folder} && tar -C {params.out_folder} --extract --file={input.tar} {params.file_in_tar}'
 
 def get_gifti_input (wildcards):
     if wildcards.surfname == 'pial': #add .T1 to the name (since pial is a symlink to pial.T1) so can use if extracting from tar
-        return join(config['freesurfer'],'surf','{hemi}.{surfname}.T1'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
+        return join(config['freesurfer'].format(dataset=config["dataset"], subject='{subject}'),'surf','{hemi}.{surfname}.T1'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
     else:
-        return join(config['freesurfer'],'surf','{hemi}.{surfname}'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
+        return join(config['freesurfer'].format(dataset=config["dataset"], subject='{subject}'),'surf','{hemi}.{surfname}'.format(hemi=H_to_hemi[wildcards.hemi],surfname=wildcards.surfname))
         
 rule convert_to_gifti:
     input: get_gifti_input
@@ -171,7 +171,7 @@ rule convert_to_gifti:
     params: 
         license = config['fs_license']
     container: config['singularity_freesurfer']
-    log: 'logs/convert_to_gifti/sub-{subject}_{hemi}_{surfname}.log'
+    log: 'logs/{dataset}/convert_to_gifti/sub-{subject}_{hemi}_{surfname}.log'
     group: 'participant1'
     shell: 'FS_LICENSE={params.license} mris_convert {input} {output} &> {log}'
 
@@ -182,46 +182,88 @@ rule convert_to_nifti:
     params: 
         license = config['fs_license']
     container: config['singularity_freesurfer']
-    log: 'logs/convert_to_nifti/sub-{subject}_{volname}.log'
+    log: 'logs/{dataset}/convert_to_nifti/sub-{subject}_{volname}.log'
     group: 'participant1'
     shell: 'FS_LICENSE={params.license} mri_convert {input} {output} &> {log}'
 
 
 rule get_tkr2scanner:
     input: 
-        t1 = bids(root='results/{dataset}/midthickness',subject='{subject}',suffix='T1.nii.gz')
+        t1 = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            suffix='T1.nii.gz'
+            )
     output:
-        tkr2scanner = bids(root='results/{dataset}/midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
+        tkr2scanner = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            suffix='tkr2scanner.xfm'
+            )
     params: 
         license = config['fs_license']
     container: config['singularity_freesurfer']
-    log: 'logs/get_tkr2scanner/sub-{subject}.log'
+    log: 'logs/{dataset}/get_tkr2scanner/sub-{subject}.log'
     group: 'participant1'
     shell: 'FS_LICENSE={params.license} mri_info {input.t1} --tkr2scanner > {output.tkr2scanner} 2> {log}'
 
 
 rule apply_surf_tkr2scanner:
     input: 
-        surf = bids(root='results/{dataset}/midthickness',subject='{subject}',hemi='{hemi}',suffix='{surfname}.surf.gii',space='fsaverage'),
-        tkr2scanner = bids(root='results/{dataset}/midthickness',subject='{subject}',suffix='tkr2scanner.xfm')
+        surf = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            hemi='{hemi}',
+            suffix='{surfname}.surf.gii',
+            space='fsaverage'
+            ),
+        tkr2scanner = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            suffix='tkr2scanner.xfm'
+            )
     output: 
-        surf = bids(root='results/{dataset}/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='{surfname}.surf.gii')
+        surf = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            hemi='{hemi}',
+            space='native',
+            suffix='{surfname}.surf.gii'
+            )
     threads: 8
     container: config['singularity_connectome_workbench']
-    log: 'logs/apply_surf_tkr2scanner/sub-{subject}_{hemi}_{surfname}.log'
+    log: 'logs/{dataset}/apply_surf_tkr2scanner/sub-{subject}_{hemi}_{surfname}.log'
     group: 'participant1'
     shell: 'wb_command -surface-apply-affine {input.surf} {input.tkr2scanner} {output.surf} &> {log}'
 
 
 rule gen_midthickness:
     input:
-        white = bids(root='results/{dataset}/midthickness',subject='{subject}',hemi='{hemi}',suffix='white.surf.gii',space='{space}'),
-        pial  = bids(root='results/{dataset}/midthickness',subject='{subject}',hemi='{hemi}',suffix='pial.surf.gii',space='{space}')
+        white = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            hemi='{hemi}',
+            suffix='white.surf.gii',
+            space='{space}'
+            ),
+        pial = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            hemi='{hemi}',
+            suffix='pial.surf.gii',
+            space='{space}'
+            )
     output: 
-        midthickness = bids(root='results/{dataset}/midthickness',subject='{subject}',hemi='{hemi}',suffix='midthickness.surf.gii',space='{space}')
+        midthickness = bids(
+            root='results/{dataset}/midthickness',
+            subject='{subject}',
+            hemi='{hemi}',
+            suffix='midthickness.surf.gii',
+            space='{space}'
+            )
     container: config['singularity_connectome_workbench']
     threads: 8
-    log: 'logs/gen_midthickness/sub-{subject}_{hemi}_{space}.log'
+    log: 'logs/{dataset}/gen_midthickness/sub-{subject}_{hemi}_{space}.log'
     group: 'participant1'
     shell: 'wb_command -surface-average {output.midthickness} -surf {input.white} -surf {input.pial} &> {log}'
 
@@ -230,7 +272,13 @@ rule gen_midthickness:
 rule gen_midthickness_all:
     input:
         midthickness = expand(
-                        bids(root='results/{dataset}/midthickness',subject='{subject}',hemi='{hemi}',space='native',suffix='midthickness.surf.gii'),
+                        bids(
+                            root='results/{dataset}/midthickness',
+                            subject='{subject}',
+                            hemi='{hemi}',
+                            space='native',
+                            suffix='midthickness.surf.gii'
+                            ),
                         dataset = config["dataset"],
                         subject=inputs.subjects,
                         hemi=config['hemi'])
@@ -419,6 +467,7 @@ rule parcellate_original_all:
 ## pair-wise ISC
 def subject_id_filter(bidscomp):
     zip_lists = bidscomp.zip_lists
+    # filter for control subjects ids > 5000
     ind = [i for i,s in enumerate(zip_lists['subject']) if int(s)>5000]
     filtered_zip_lists = dict()
     for k,v in zip_lists.items():
@@ -439,7 +488,7 @@ def ISC_gen_inputs(wildcards):
         filtered = inputs["preproc_bold"]
 
     ins = expand(
-                bids(root=f"results/{dataset}/{source}-parcellated/{wildcards.atlas}", ## disk quota exceeded changed to test
+                bids(root=f"results/{wildcards.dataset}/{source}-parcellated/{wildcards.atlas}", ## disk quota exceeded changed to test
                     datatype="func",
                     subject="{subject}",
                     task="{task}",
@@ -470,7 +519,7 @@ rule pw_ISC_movie:
             task="movie",
             hemi=config["hemi"],
             confounds_idx=1,
-            resampled=['N'],
+            resampled=config["resampling"],
             atlas=config["parcellations"]
         )
 
@@ -494,7 +543,7 @@ rule loo_ISC_movie:
             group="control",
             hemi=config["hemi"],
             confounds_idx=1,
-            resampled=['N'],
+            resampled=config["resampling"],
             atlas=config["parcellations"]
         )
 
