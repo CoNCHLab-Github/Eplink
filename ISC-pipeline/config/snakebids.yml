@@ -10,7 +10,8 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 
 # Dataset configs
 dataset: eplink-p2
-movie_name: hitchcock# movie (for phase III)
+movie_name: hitchcock
+# movie (for phase III)
 
 # Parcellation configs
 parcellations:
