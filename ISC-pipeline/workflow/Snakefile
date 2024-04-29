@@ -516,7 +516,7 @@ rule pw_ISC_movie:
     input: 
         expand(rules.pw_ISC.output.h5,
             dataset = config["dataset"],
-            task="movie",
+            task=config["movie_name"],
             hemi=config["hemi"],
             confounds_idx=1,
             resampled=config["resampling"],
@@ -539,7 +539,7 @@ rule loo_ISC_movie:
     input: 
         expand(rules.loo_ISC.output.h5,
             dataset = config["dataset"],
-            task="movie",
+            task=config["movie_name"],
             group="control",
             hemi=config["hemi"],
             confounds_idx=1,
