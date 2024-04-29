@@ -491,7 +491,7 @@ def ISC_gen_inputs(wildcards):
                 bids(root=f"results/{wildcards.dataset}/{source}-parcellated/{wildcards.atlas}", ## disk quota exceeded changed to test
                     datatype="func",
                     subject="{subject}",
-                    task="{task}",
+                    task=wildcards.task,
                     run="{run}",
                     confounds=wildcards.confounds_idx,
                     hemi=wildcards.hemi,
