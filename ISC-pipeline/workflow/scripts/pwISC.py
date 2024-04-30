@@ -82,7 +82,7 @@ df = pd.DataFrame(inputs)
 # Sort files 
 df = df.sort_values(by=['Subject', 'Task', 'Run'], ascending=[True]*3).reset_index()
 # Target volumes ===> TODO: a method to automatically determining the number of volumes
-target_volumes = 384
+target_volumes = 240 # for original phase III = 384
 # Exclude files with less volumes
 df = df[df["#Vols"] >= target_volumes].reset_index(drop=True)
 # Get unique subjects
