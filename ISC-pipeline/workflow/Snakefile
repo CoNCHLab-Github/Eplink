@@ -477,50 +477,78 @@ def subject_id_filter(bidscomp):
     return filtered
 
 def ISC_gen_inputs(wildcards):
+    # Determine the inputs source based on temporal resampling
     if wildcards.resampled == 'Y':
         source = 'temporalResampled'
     else:
         source = 'resampled2fsLR/32k_space_surfaces'
 
+    # Determine the subject range based on the group selected (controls, patients, all)
     if hasattr(wildcards, "group"):
-        filtered = subject_id_filter(inputs["preproc_bold"])
+        filtered = subject_id_filter(inputs["preproc_bold"]) # select controls
     else:
-        filtered = inputs["preproc_bold"]
+        filtered = inputs["preproc_bold"] # proceed with all
 
-    ins = expand(
-                bids(root=f"results/{wildcards.dataset}/{source}-parcellated/{wildcards.atlas}", ## disk quota exceeded changed to test
-                    datatype="func",
-                    subject="{subject}",
-                    task=wildcards.task,
-                    run="{run}",
-                    confounds=wildcards.confounds_idx,
-                    hemi=wildcards.hemi,
-                    suffix="bold.func.h5"
-                ),
-                zip,
-                **filtered.zip_lists,
-                allow_missing=True
-            )
+    # Different inputs are required for vertex level and parcellated  
+    if wildcards.atlas == "none": # Vertex level
+        ins = expand(
+                    bids(root=f"results/{wildcards.dataset}/{source}",
+                        datatype="func",
+                        subject="{subject}",
+                        task="{task}", # It's important for the task to be filtered later not forcing all subjects having all tasks
+                        run="{run}",
+                        fwhm="{fwhm}",
+                        space="fsLR_den-32k",
+                        desc="denoised",
+                        confounds=wildcards.confounds_idx,
+                        hemi=wildcards.hemi,
+                        suffix="bold.func.gii"
+                    ),
+                    zip,
+                    **filtered.zip_lists,
+                    allow_missing=True
+                )
+    else: # Parcellated
+        ins = expand(
+                    bids(root=f"results/{wildcards.dataset}/{source}-parcellated/{wildcards.atlas}",
+                        datatype="func",
+                        subject="{subject}",
+                        task="{task}", # It's important for the task to be filtered later not forcing all subjects having all tasks
+                        run="{run}",
+                        confounds=wildcards.confounds_idx,
+                        hemi=wildcards.hemi,
+                        suffix="bold.func.h5"
+                    ),
+                    zip,
+                    **filtered.zip_lists,
+                    allow_missing=True
+                )
     return ins
 
 rule pw_ISC:
     input:
         func = ISC_gen_inputs
     output:
-        h5 = "results/{dataset}/pwISC/pwISC_task-{task}_hemi-{hemi}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5"
+        h5 = "results/{dataset}/pwISC/pwISC_task-{task}_hemi-{hemi}_fwhm-{fwhm}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5"
     script:
         "scripts/pwISC.py"
 
 # Dumy rule
 rule pw_ISC_movie:
     input: 
-        expand(rules.pw_ISC.output.h5,
-            dataset = config["dataset"],
-            task=config["movie_name"],
-            hemi=config["hemi"],
-            confounds_idx=1,
-            resampled=config["resampling"],
-            atlas=config["parcellations"]
+        expand(
+            expand(rules.pw_ISC.output.h5,
+                dataset = config["dataset"],
+                task=config["movie_name"],
+                hemi=config["hemi"],
+                fwhm="{fwhm}",
+                confounds_idx=1,
+                resampled=config["resampling"],
+                atlas="{atlas}"
+            ),
+            zip,
+            fwhm=[0]*len(config["parcellations"]) + config["fwhm"],
+            atlas=config["parcellations"] + ["none"]*len(config["fwhm"]) # atlas = none would just use vertices as units   
         )
 
     # default_target: True
@@ -530,21 +558,34 @@ rule loo_ISC:
     input:
         func = ISC_gen_inputs
     output:
-        h5 = "results/{dataset}/looISC/{group}/looISC_task-{task}_hemi-{hemi}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5"
+        h5 = "results/{dataset}/looISC/{group}/looISC_task-{task}_hemi-{hemi}_fwhm-{fwhm}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5"
     script:
         "scripts/looISC.py"
 
 # Dumy rule
 rule loo_ISC_movie:
-    input: 
-        expand(rules.loo_ISC.output.h5,
-            dataset = config["dataset"],
-            task=config["movie_name"],
-            group="control",
-            hemi=config["hemi"],
-            confounds_idx=1,
-            resampled=config["resampling"],
-            atlas=config["parcellations"]
+    input:
+        expand( 
+            expand(rules.loo_ISC.output.h5,
+                dataset = config["dataset"],
+                task=config["movie_name"],
+                group="control",
+                hemi=config["hemi"],
+                fwhm="{fwhm}",
+                confounds_idx=1,
+                resampled=config["resampling"],
+                atlas="{atlas}"
+            ),
+            zip,
+            fwhm=[0]*len(config["parcellations"]) + config["fwhm"],
+            atlas=config["parcellations"] + ["none"]*len(config["fwhm"]) # atlas = none would just use vertices as units
         )
 
+    # default_target: True
+
+rule ISC_all:
+    input:
+        loo = rules.loo_ISC_movie.input,
+        pw = rules.pw_ISC_movie.input
+    
     default_target: True
