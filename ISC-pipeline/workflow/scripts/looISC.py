@@ -25,7 +25,7 @@ def get_dimensions(filepath):
         # Load the GIFTI file by nibabel
         gii = nib.load(filepath)
         # Return data dimensions
-        n_rois = gii.darrays[0].data.shape
+        n_rois = gii.darrays[0].data.shape[0]
         n_vol = len(gii.darrays)
     
     return n_rois, n_vol
