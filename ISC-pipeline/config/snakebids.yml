@@ -8,12 +8,17 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 
 # #participants_tsv: config/participants.tsv
 
+# Dataset configs
+dataset: eplink-p2
+movie_name: hitchcock
+# movie (for phase III)
+
 # Parcellation configs
 parcellations:
   - Desikan
   - Glasser_2016
-  - Schaefer_2018/Schaefer2018_17Networks_400
-
+  - Schaefer2018_17Networks_400
+  - Yan2023_17Networks_400
 
 # Smoothing configs
 fwhm:
@@ -22,6 +27,10 @@ fwhm:
   - 10
 
 # Temporal resampling configs
+resampling:
+  - N
+# - Y
+
 original_TR: 1.25 
 target_TR: 2
 
@@ -29,11 +38,11 @@ target_TR: 2
 # # Denoise configs
 # search_terms: {}
 # #optional: specify tar containing a particular subject'a freesurfer folder
-freesurfer: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}'
-freesurfer_root: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2'
-freesurfer_tar: '/project/6050199/alit/EpLink/eplink-p3-freeSurfer-out/freesurfer_7.2/sub-{subject}.tar'
+freesurfer: '/project/6050199/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2/sub-{subject}'
+freesurfer_root: '/project/6050199/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2'
+freesurfer_tar: '/project/6050199/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2/sub-{subject}.tar'
 
-fMRIprep_dir: '/project/6050199/alit/EpLink/eplink-p3-fMRIprep-freesurfer'
+fMRIprep_dir: '/project/6050199/alit/EpLink/{dataset}-fMRIprep-freesurfer'
 # output_dir: '/project/6050199/alit/EpLink/phase3'
 
 hemi:
@@ -65,7 +74,7 @@ pybids_inputs:
       # scope: derivatives    # raw, derivatives (or can be pipeline name too!)
       # invalid_filters: allow
       datatype: func
-      # run: true
+      run: true
     wildcards:
       - subject
       - session
@@ -82,7 +91,7 @@ pybids_inputs:
       extension: .nii.gz
       #scope: derivatives    # raw, derivatives (or can be pipeline name too!)
       datatype: func
-      # run: true
+      run: true
     wildcards:
       - subject
       - session
@@ -98,7 +107,7 @@ pybids_inputs:
       desc: confounds
       extension: .tsv
       #scope: derivatives    # raw, derivatives (or can be pipeline name too!)
-      # run: true
+      run: true
     wildcards:
       - subject
       - session

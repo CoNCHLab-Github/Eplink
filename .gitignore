@@ -2,3 +2,5 @@ ISC-pipeline/path
 ISC-pipeline/results
 ISC-pipeline/.snakemake
 ISC-pipeline/logs
+.*DS_Store
+test.py
