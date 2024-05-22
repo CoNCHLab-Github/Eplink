@@ -11,6 +11,7 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 # Dataset configs
 dataset: eplink-p2
 movie_name: hitchcock
+# hitchcock (for phase II)
 # movie (for phase III)
 
 # Parcellation configs
@@ -29,7 +30,7 @@ fwhm:
 # Temporal resampling configs
 resampling:
   - N
-# - Y
+ # - Y
 
 original_TR: 1.25 
 target_TR: 2
