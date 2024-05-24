@@ -10,10 +10,9 @@ label_gii = nib.load(snakemake.input.atlas)
 func_data = np.vstack([darray.data for darray in func_gii.darrays])
 (n_t, n_v) = func_data.shape # get number of time samples and vertices
 label_data = label_gii.darrays[0].data
-label_table = label_gii.labeltable.get_labels_as_dict()
 
 # Get parcels from the label table
-ROIs = label_table.keys()
+ROIs = np.unique(label_data)
 
 # Initialize a list to hold the parcellated functional data
 parcellated_data = np.zeros((len(ROIs),n_t))
