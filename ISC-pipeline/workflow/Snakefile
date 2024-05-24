@@ -146,6 +146,7 @@ rule smooth_denoise_all:
                 confounds_idx=range(1, len(config["confounds"]) + 1),
                 desc="denoised",
             ),
+    # default_target: True
 
 ## Generate midthickness rules
 rule extract_from_tar:
@@ -283,6 +284,7 @@ rule gen_midthickness_all:
                         subject=inputs.subjects,
                         hemi=config['hemi'])
 
+    # default_target: True
 
 ## Resample to surface rules
 rule vol2surf:
@@ -359,7 +361,7 @@ rule resample2fsLR_all:
                 confounds_idx=range(1, len(config["confounds"]) + 1),
                 hemi=config['hemi']
             ),
-    #default_target: True
+    # default_target: True
 
 
 ## Temporal resampling
@@ -418,7 +420,7 @@ rule parcellate:
         ),
         atlas = "resources/atlases_fsLR_32K/{atlas}.32k.{hemi}.label.gii"
     output:
-        h5 = bids(root="results/{dataset}/{source}-parcellated/{atlas}", ## disk quota exceeded changed to test
+        h5 = bids(root="results/{dataset}/{source}-parcellated/{atlas}",
             datatype="func",
             subject="{subject}",
             task="{task}",
