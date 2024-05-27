@@ -4,3 +4,4 @@ ISC-pipeline/.snakemake
 ISC-pipeline/logs
 .*DS_Store
 test.py
+results
