@@ -6,3 +6,4 @@ ISC-pipeline/logs
 __pycache__
 *.gii
 test.py
+results
