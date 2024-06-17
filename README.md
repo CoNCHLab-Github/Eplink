@@ -136,8 +136,7 @@ Here is a list of available parcellations:
 
 > **Note 2:** Yan 2023 parcellations come in CIFTI format and were converted to .gii using wb_command:
 `
-wb_command -cifti-separate <input>.dlabel.nii COLUMN -label CORTEX_LEFT <output_L>.label.gii;
-wb_command -cifti-separate <input>.dlabel.nii COLUMN -label CORTEX_RIGHT <output_R>.label.gii
+wb_command -cifti-separate <input>.dlabel.nii COLUMN -label CORTEX_LEFT <output_L>.label.gii -label CORTEX_RIGHT <output_R>.label.gii
 `
 
 #### Setting up python virtual environment
