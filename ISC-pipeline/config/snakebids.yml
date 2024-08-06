@@ -9,8 +9,8 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 # #participants_tsv: config/participants.tsv
 
 # Dataset configs
-dataset: eplink-p2
-movie_name: hitchcock
+dataset: eplink-p3
+movie_name: movie
 # hitchcock (for phase II)
 # movie (for phase III)
 
