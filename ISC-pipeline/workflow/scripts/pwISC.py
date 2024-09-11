@@ -60,6 +60,18 @@ def load_runs(runs_df, n_vols):
     
     return data
 
+def vectorize_pw_matrix(pw_matrix:np.ndarray):
+    return pw_matrix[np.tril_indices_from(pw_matrix, k=-1)]
+
+def recon_pw_matrix(pw_vec:np.ndarray, n=None):
+    if n is None:
+        n = int(1+np.sqrt(1+8*pw_vec.size))//2
+    pw_matrix = np.zeros((n,n))
+    pw_matrix[np.tril_indices(n,k=-1)] = pw_vec
+    pw_matrix = pw_matrix+pw_matrix.T
+    pw_matrix[np.diag_indices(n)] = 1
+    return pw_matrix
+
 # Infer task form the output name
 pattern = re.compile(r"task-([^_]+)")
 match = pattern.search(snakemake.output.h5)
@@ -101,10 +113,11 @@ data = np.stack(data)
 # Reorganizing data to (Unit, Subject, Time) shape for more efficient slicing when calculating ISCs
 data = np.transpose(data, axes=(1, 0, 2))
 
-pw_ISC = np.zeros((n_unit, len(subjects), len(subjects)))
-for i in range(n_unit):
-    pw_ISC[i,:,:] = np.corrcoef(data[i,:,:])
+#### Pair-wise ISC
+pw_ISC = [vectorize_pw_matrix(np.corrcoef(data[u,:,:], rowvar=True)) for u in range(data.shape[0])] # we save the lower triangle only
+pw_ISC = np.stack(pw_ISC)
 
 # Save ISCs as HDF5 file
 with h5py.File(snakemake.output.h5, 'w') as f:
     f.create_dataset('pw_ISC', data=pw_ISC)
+    f.create_dataset('subjects', data=subjects)
