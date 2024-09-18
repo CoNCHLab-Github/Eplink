@@ -60,18 +60,6 @@ def load_runs(runs_df, n_vols):
     
     return data
 
-def vectorize_pw_matrix(pw_matrix:np.ndarray):
-    return pw_matrix[np.tril_indices_from(pw_matrix, k=-1)]
-
-def recon_pw_matrix(pw_vec:np.ndarray, n=None):
-    if n is None:
-        n = int(1+np.sqrt(1+8*pw_vec.size))//2
-    pw_matrix = np.zeros((n,n))
-    pw_matrix[np.tril_indices(n,k=-1)] = pw_vec
-    pw_matrix = pw_matrix+pw_matrix.T
-    pw_matrix[np.diag_indices(n)] = 1
-    return pw_matrix
-
 # Infer task form the output name
 pattern = re.compile(r"task-([^_]+)")
 match = pattern.search(snakemake.output.h5)
@@ -94,13 +82,12 @@ df = pd.DataFrame(inputs)
 # Sort files 
 df = df.sort_values(by=['Subject', 'Task', 'Run'], ascending=[True]*3).reset_index()
 # Target volumes ===> TODO: a method to automatically determining the number of volumes
-target_volumes = 384 
-# for original phase III = 384
-# for original phase II = 240
+target_volumes = 240# 384
 # Exclude files with less volumes
 df = df[df["#Vols"] >= target_volumes].reset_index(drop=True)
 # Get unique subjects
 subjects = df['Subject'].unique()
+n_subject = len(subjects)
 
 # Load files data
 data = []
@@ -113,13 +100,20 @@ for subj in subjects:
 # Stacking subjects data (Subject, Unit, Time)
 data = np.stack(data)
 # Reorganizing data to (Unit, Subject, Time) shape for more efficient slicing when calculating ISCs
-data = np.transpose(data, axes=(1, 0, 2))
+# data = np.transpose(data, axes=(1, 0, 2))
 
-#### Pair-wise ISC
-pw_ISC = [vectorize_pw_matrix(np.corrcoef(data[u,:,:], rowvar=True)) for u in range(data.shape[0])] # we save the lower triangle only
-pw_ISC = np.stack(pw_ISC)
+# Sum subjects data (Unit, Time)
+data_sum = data.sum(axis=0)
+
+# Output will be shaped as (Subject, Unit)
+loo_ISC = np.zeros((n_subject, n_unit))
+for i in range(n_subject):
+    for j in range(n_unit):
+        sum_ts = data_sum[j,:].reshape((1,-1))
+        sub_ts = data[i,j,:].reshape((1,-1))
+        c = np.corrcoef(sub_ts, sum_ts-sub_ts)
+        loo_ISC[i,j] = c[0,1]
 
 # Save ISCs as HDF5 file
 with h5py.File(snakemake.output.h5, 'w') as f:
-    f.create_dataset('pw_ISC', data=pw_ISC)
-    f.create_dataset('subjects', data=subjects)
+    f.create_dataset('loo_ISC', data=loo_ISC)
