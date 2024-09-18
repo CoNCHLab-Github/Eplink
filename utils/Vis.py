@@ -2,9 +2,10 @@ from surfplot import Plot
 import matplotlib.pyplot as plt
 import os
 
-def plot_maps(map, atlas=None, mesh='very_inflated', range=None, layout='grid' , cmap='viridis', cbar=True, title=None, clabel=None, ax=None):
+def plot_maps(map, atlas=None, mesh='very_inflated', surf_mesh=None, range=None, layout='grid' , cmap='viridis', cbar=True, title=None, clabel=None, ax=None):
     # Surface mesh files
-    surf_mesh = os.path.join('ISC-pipeline','resources','fsLR_32K_surfaces',f'fs_LR.32k.{{hemi}}.{mesh}.surf.gii')
+    if surf_mesh is None:
+        surf_mesh = os.path.join('ISC-pipeline','resources','fsLR_32K_surfaces',f'fs_LR.32k.{{hemi}}.{mesh}.surf.gii')
 
     cbar_kws = {'location': 'bottom', 'label_direction': 0, 'decimals': 2,
     'fontsize': 8, 'n_ticks': 7, 'shrink': 0.5, 'aspect': 40}
