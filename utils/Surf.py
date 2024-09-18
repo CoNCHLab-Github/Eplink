@@ -16,7 +16,8 @@ def roi2gii(roi_data, atlasfile, fpath, fname, mask=None):
         label_gii = nib.load(atlasfile.format(hemi=hemi))
         label_data = label_gii.darrays[0].data
 
-        idx2label = np.sort(np.unique(label_data))
+        # idx2label = np.sort(np.unique(label_data))
+        idx2label = list(label_gii.labeltable.get_labels_as_dict().keys())
         # Copy ROI value to vertices 
         n_vertices = len(label_data)
         surface_values[hemi] = np.zeros(n_vertices, dtype='float32')
