@@ -1,7 +1,13 @@
 ISC-pipeline/path
 ISC-pipeline/results
 ISC-pipeline/.snakemake
+ISC-pipeline/workflow/.snakemake
 ISC-pipeline/logs
 .*DS_Store
+__pycache__
+*.shape.gii
 test.py
+scratch
+surface_maps
 results
+fig

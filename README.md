@@ -25,6 +25,13 @@ Raw data is available in BIDS format on Graham (ComputeCanada):
 
 ### Phase II
 
+This data is collected from epileptic patients, and age and sex matched healthy controls at the Centre for Functional and Metabolic Mapping, Western University, London, Ontario. The dataset consists of a structural scan and three naturalistic tasks: a resting state and a movie watching task. The movie was *Bang! You're Dead* by Alfred Hitchcock (hitchcock). The following table summarizes the acquisition parameters for the tasks:
+
+| run       | # Volumes | TR (ms)   | TE (ms) | Slice Thickness (mm) |
+| --------- | --------- | --------- | ------- | -------------------- |
+| rest      | 175       | 2200      | 30      | 3.7                  |
+| hitchcock | 246       | 2000      | 30      | 3                    |
+
 ### Phase III
 
 ### TWH
@@ -42,7 +49,7 @@ use `squeue` or `sq` command to list Slurm jobs. `squeue` supplies information a
 #### mounting compute canada as a file system using sshfs:
 1. create a directory for the mount if you don't have one: `mkdir ~/Graham`
 2. use sshfs to mount as a directory on computecanada file system: ```sshfs <username>@graham.computecanada.ca:/home/<username>/projects/ctb-akhanf/<username> ~/Graham```
-3. You will be asked for youe password and 2FA if applicable.
+3. You will be asked for your password and 2FA if applicable.
 
 ### neuroglia-helpers
 
