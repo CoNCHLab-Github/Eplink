@@ -534,7 +534,7 @@ rule parcellate:
             task="{task}",
             run="{run}",
         ),
-        atlas="resources/atlases_fsLR_32K/{atlas}.32k.{hemi}.label.gii",
+        atlas="resources/atlases_fsLR_32K/cleaned_versions/{atlas}.32k.{hemi}.label.gii",
     output:
         h5=bids(
             root="results/{dataset}/{source}-parcellated/{atlas}",
