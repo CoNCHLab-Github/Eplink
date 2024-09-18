@@ -7,5 +7,7 @@ ISC-pipeline/logs
 __pycache__
 *.shape.gii
 test.py
+scratch
+surface_maps
 results
 fig
