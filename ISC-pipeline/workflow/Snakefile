@@ -534,7 +534,7 @@ rule parcellate:
             task="{task}",
             run="{run}",
         ),
-        atlas="resources/atlases_fsLR_32K/{atlas}.32k.{hemi}.label.gii",
+        atlas="resources/atlases_fsLR_32K/cleaned_versions/{atlas}.32k.{hemi}.label.gii",
     output:
         h5=bids(
             root="results/{dataset}/{source}-parcellated/{atlas}",
@@ -568,7 +568,7 @@ rule parcellate_resampled_all:
         ),
 
 
-# default_target: True
+    # default_target: True
 
 
 rule parcellate_original_all:
@@ -588,7 +588,7 @@ rule parcellate_original_all:
         ),
 
 
-# default_target: True
+    # default_target: True
 
 
 ## pair-wise ISC
@@ -663,6 +663,9 @@ def ISC_gen_inputs(wildcards):
 rule pw_ISC:
     input:
         func=ISC_gen_inputs,
+    params:
+        n_dummies=config['n_dummies'],
+        n_volumes=config['n_volumes'],
     output:
         h5="results/{dataset}/pwISC/pwISC_task-{task}_hemi-{hemi}_fwhm-{fwhm}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5",
     script:
@@ -697,6 +700,9 @@ rule pw_ISC_movie:
 rule loo_ISC:
     input:
         func=ISC_gen_inputs,
+    params:
+        n_dummies=config['n_dummies'],
+        n_volumes=config['n_volumes'],
     output:
         h5="results/{dataset}/looISC/{group}/looISC_task-{task}_hemi-{hemi}_fwhm-{fwhm}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5",
     script:

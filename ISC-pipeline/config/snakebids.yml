@@ -11,15 +11,18 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 # Dataset configs
 dataset: eplink-p3
 movie_name: movie
-# hitchcock (for phase II)
-# movie (for phase III)
+n_dummies: 0
+n_volumes: 240
+# movie_name: hitchcock (for phase II)/movie (for phase III)
+# n_dummies: 5 (for phase II)/0 (for phase III)
+# n_voluems: 240 (for phase II) and resampled phase III/384 (for phase III)
 
 # Parcellation configs
 parcellations:
   - Desikan
-  - Glasser_2016
-  - Schaefer2018_17Networks_400
-  - Yan2023_17Networks_400
+  - Glasser2016
+  - Schaefer2018_Kong2022_400
+  - Yan2023_Kong2022_400
 
 # Smoothing configs
 fwhm:
@@ -29,8 +32,8 @@ fwhm:
 
 # Temporal resampling configs
 resampling:
-  - N
- # - Y
+  - Y
+  # - Y
 
 original_TR: 1.25 
 target_TR: 2
