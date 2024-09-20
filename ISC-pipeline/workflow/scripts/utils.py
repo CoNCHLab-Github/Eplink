@@ -59,10 +59,10 @@ def load_runs(runs_df, n_vols, n_dummies=0):
     
     return data
 
-def vectorize_pw_matrix(pw_matrix:np.ndarray):
+def vectorize_lt_matrix(pw_matrix:np.ndarray):
     return pw_matrix[np.tril_indices_from(pw_matrix, k=-1)]
 
-def recon_pw_matrix(pw_vec:np.ndarray, n=None):
+def recon_lt_matrix(pw_vec:np.ndarray, n=None):
     if n is None:
         n = int(1+np.sqrt(1+8*pw_vec.size))//2
     pw_matrix = np.zeros((n,n))
