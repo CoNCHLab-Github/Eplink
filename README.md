@@ -49,7 +49,7 @@ use `squeue` or `sq` command to list Slurm jobs. `squeue` supplies information a
 #### mounting compute canada as a file system using sshfs:
 1. create a directory for the mount if you don't have one: `mkdir ~/Graham`
 2. use sshfs to mount as a directory on computecanada file system: ```sshfs <username>@graham.computecanada.ca:/home/<username>/projects/ctb-akhanf/<username> ~/Graham```
-3. You will be asked for youe password and 2FA if applicable.
+3. You will be asked for your password and 2FA if applicable.
 
 ### neuroglia-helpers
 
