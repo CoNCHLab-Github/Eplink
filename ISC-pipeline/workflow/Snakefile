@@ -606,6 +606,9 @@ rule pearson_fc: # Uses original data (no temporal resampling)
             hemi=config["hemi"],
             allow_missing=True
         )
+    params:
+        n_dummies=config['n_dummies'],
+        n_volumes=config['n_volumes'],
     output:
         h5 = bids(root="results/{dataset}/FC/{atlas}",
             datatype="func",
@@ -613,7 +616,7 @@ rule pearson_fc: # Uses original data (no temporal resampling)
             task="{task}",
             run="{run}",
             confounds="{confounds_idx}",
-            suffix="_pearson.h5"
+            suffix="pearson.h5"
         )
     script:
         "scripts/pearson_FC.py"
