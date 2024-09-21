@@ -1,26 +1,17 @@
 import numpy as np
 import h5py
 import os
-
-def load_HDF(filepath, n_vols=None):
-    """Load data stored in the HDF files given the runs dataframe."""
-    if n_vols == None:
-        n_vols = -1
-    with h5py.File(filepath, 'r') as f:
-            # Load the parcellated data
-            data = f['parcellated_data'][:]
-            data = data[:,:n_vols] # Ignoring excessive volumes
-    # Returns data with shape ROI x Time
-    return data
+from utils import load_HDF
 
 data = []
 for f in snakemake.input.func:
-    data.append(load_HDF(f))
+    data.append(load_HDF(f, snakemake.params.n_volumes, snakemake.params.n_dummies))
 
 # Data with shape ROIs x Time
 data = np.vstack(data)
 
 pearson_FC = np.corrcoef(data, rowvar=True)
+params = {'n_vols':snakemake.params.n_volumes, 'n_dummies':snakemake.params.n_dummies}
 
 # Save FC matrix as HDF5 file
 with h5py.File(snakemake.output.h5, 'w') as f:
