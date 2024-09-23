@@ -591,10 +591,14 @@ rule parcellate_original_all:
     # default_target: True
 
 ## Functional Connectivity
-rule pearson_fc: # Uses original data (no temporal resampling)
-    input:
-        func = expand(
-            bids(root="results/{dataset}/resampled2fsLR/32k_space_surfaces-parcellated/{atlas}",
+def FC_gen_inputs(wildcards):
+    if wildcards.resampled == "Y":
+        source = "temporalResampled-parcellated"
+    else:
+        source = "resampled2fsLR/32k_space_surfaces-parcellated"
+    
+    inputs = expand(
+            bids(root=f"results/{wildcards.dataset}/{source}/{wildcards.atlas}",
                 datatype="func",
                 subject="{subject}",
                 task="{task}",
@@ -606,6 +610,12 @@ rule pearson_fc: # Uses original data (no temporal resampling)
             hemi=config["hemi"],
             allow_missing=True
         )
+
+    return inputs
+
+rule pearson_fc:
+    input:
+        func = FC_gen_inputs,
     params:
         n_dummies=config['n_dummies'],
         n_volumes=config['n_volumes'],
@@ -616,6 +626,7 @@ rule pearson_fc: # Uses original data (no temporal resampling)
             task="{task}",
             run="{run}",
             confounds="{confounds_idx}",
+            resampled="{resampled}",
             suffix="pearson.h5"
         )
     script:
@@ -632,7 +643,8 @@ rule fc_all:
                 ),
                 dataset = config["dataset"],
                 confounds_idx=range(1, len(config["confounds"]) + 1),
-                atlas=config["parcellations"]
+                atlas=config["parcellations"],
+                resampled=config["resampling"],
             )
     
     default_target: True
