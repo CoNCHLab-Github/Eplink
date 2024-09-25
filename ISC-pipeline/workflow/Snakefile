@@ -647,7 +647,7 @@ rule fc_all:
                 resampled=config["resampling"],
             )
     
-    default_target: True
+    # default_target: True
 
 
 ## pair-wise ISC
@@ -799,3 +799,45 @@ rule ISC_all:
         pw = rules.pw_ISC_movie.input
     
     # default_target: True
+
+## tSNR (first for the parcellated files only to be extended)
+rule tSNR:
+    input:
+        ts=bids(root="results/{dataset}/{source}-parcellated/{atlas}",
+                datatype="func",
+                subject="{subject}",
+                task="{task}",
+                run="{run}",
+                confounds="{confounds_idx}",
+                hemi="{hemi}",
+                suffix="bold.func.h5"
+                )
+    output:
+        tSNR=bids(root="results/{dataset}/{source}-parcellated/{atlas}",
+                datatype="func",
+                subject="{subject}",
+                task="{task}",
+                run="{run}",
+                confounds="{confounds_idx}",
+                hemi="{hemi}",
+                suffix="tSNR.h5"
+                )
+    script:
+        "scripts/tSNR.py"
+
+# Dummy rule
+rule tSNR_parcellated:
+    input:
+        tSNR=expand(
+                expand(rules.tSNR.output.tSNR,
+                        zip,
+                        **inputs["preproc_bold"].zip_lists,
+                        allow_missing=True,
+                    ),
+                dataset=config["dataset"],
+                source="resampled2fsLR/32k_space_surfaces",
+                confounds_idx=range(1, len(config["confounds"]) + 1),
+                hemi=config["hemi"],
+                atlas=config["parcellations"],
+                )
+    default_target: True
