@@ -730,9 +730,38 @@ rule pw_ISC:
     script:
         "scripts/pwISC.py"
 
+rule pw_ISC_ds2:
+    input:
+        func=ISC_gen_inputs,
+    params:
+        n_dummies=config['n_dummies'],
+        n_volumes=config['n_volumes'],
+    output:
+        h5="results/{dataset}/pwISC/pwISC_ds2_task-{task}_hemi-{hemi}_fwhm-{fwhm}_confounds-{confounds_idx}_resampled-{resampled}_atlas-{atlas}.h5",
+    script:
+        "scripts/pwISC_ds2.py"
 
 # Dumy rule
 # atlas = none would just use vertices as units
+rule pw_ISC_ds2_dummy:
+    input:
+        expand(
+            expand(
+                rules.pw_ISC_ds2.output.h5,
+                dataset=config["dataset"],
+                task=config["movie_name"],
+                hemi=config["hemi"],
+                fwhm="{fwhm}",
+                confounds_idx=1,
+                resampled=config["resampling"],
+                atlas="{atlas}",
+            ),
+            zip,
+            fwhm=[0] * len(config["parcellations"]) + config["fwhm"],
+            atlas=config["parcellations"] + ["none"] * len(config["fwhm"]),
+        ),
+    default_target: True
+
 rule pw_ISC_movie:
     input:
         expand(
