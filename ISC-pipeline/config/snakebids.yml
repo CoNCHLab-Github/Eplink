@@ -12,7 +12,7 @@ fs_license: /project/6050199/akhanf/opt/freesurfer/.license
 dataset: eplink-p3
 movie_name: movie
 n_dummies: 0
-n_volumes: 240
+n_volumes: 384
 # movie_name: hitchcock (for phase II)/movie (for phase III)
 # n_dummies: 5 (for phase II)/0 (for phase III)
 # n_voluems: 240 (for phase II) and resampled phase III/384 (for phase III)

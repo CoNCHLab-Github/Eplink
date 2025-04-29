@@ -590,6 +590,65 @@ rule parcellate_original_all:
 
     # default_target: True
 
+## Functional Connectivity
+def FC_gen_inputs(wildcards):
+    if wildcards.resampled == "Y":
+        source = "temporalResampled-parcellated"
+    else:
+        source = "resampled2fsLR/32k_space_surfaces-parcellated"
+    
+    inputs = expand(
+            bids(root=f"results/{wildcards.dataset}/{source}/{wildcards.atlas}",
+                datatype="func",
+                subject="{subject}",
+                task="{task}",
+                run="{run}",
+                confounds="{confounds_idx}",
+                hemi="{hemi}",
+                suffix="bold.func.h5"
+            ),
+            hemi=config["hemi"],
+            allow_missing=True
+        )
+
+    return inputs
+
+rule pearson_fc:
+    input:
+        func = FC_gen_inputs,
+    params:
+        n_dummies=config['n_dummies'],
+        n_volumes=config['n_volumes'],
+    output:
+        h5 = bids(root="results/{dataset}/FC/{atlas}",
+            datatype="func",
+            subject="{subject}",
+            task="{task}",
+            run="{run}",
+            confounds="{confounds_idx}",
+            resampled="{resampled}",
+            suffix="pearson.h5"
+        )
+    script:
+        "scripts/pearson_FC.py"
+
+# Dummy rules
+rule fc_all: 
+    input:
+        fc = expand(
+                expand(rules.pearson_fc.output.h5,
+                    zip,
+                    **inputs["preproc_bold"].zip_lists,
+                    allow_missing=True
+                ),
+                dataset = config["dataset"],
+                confounds_idx=range(1, len(config["confounds"]) + 1),
+                atlas=config["parcellations"],
+                resampled=config["resampling"],
+            )
+    
+    default_target: True
+
 
 ## pair-wise ISC
 def subject_id_filter(bidscomp):
@@ -765,6 +824,7 @@ rule loo_ISC_movie:
 
 rule ISC_all:
     input:
-        loo=rules.loo_ISC_movie.input,
-        pw=rules.pw_ISC_movie.input,
+        loo = rules.loo_ISC_movie.input,
+        pw = rules.pw_ISC_movie.input
+    
     # default_target: True
