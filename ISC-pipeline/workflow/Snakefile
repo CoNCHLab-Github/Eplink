@@ -164,9 +164,7 @@ rule smooth_denoise_all:
             confounds_idx=range(1, len(config["confounds"]) + 1),
             desc="denoised",
         ),
-
-
-# default_target: True
+    # default_target: True
 
 
 ## Generate midthickness rules
@@ -366,8 +364,7 @@ rule gen_midthickness_all:
             hemi=config["hemi"],
         ),
 
-
-# default_target: True
+    # default_target: True
 
 
 ## Resample to surface rules
@@ -469,8 +466,7 @@ rule resample2fsLR_all:
             hemi=config["hemi"],
         ),
 
-
-# default_target: True
+    # default_target: True
 
 
 ## Temporal resampling
@@ -647,7 +643,7 @@ rule fc_all:
                 resampled=config["resampling"],
             )
     
-    default_target: True
+    # default_target: True
 
 
 ## pair-wise ISC
@@ -760,7 +756,7 @@ rule pw_ISC_ds2_dummy:
             fwhm=[0] * len(config["parcellations"]) + config["fwhm"],
             atlas=config["parcellations"] + ["none"] * len(config["fwhm"]),
         ),
-    default_target: True
+    # default_target: True
 
 rule pw_ISC_movie:
     input:
@@ -780,8 +776,7 @@ rule pw_ISC_movie:
             atlas=config["parcellations"] + ["none"] * len(config["fwhm"]),
         ),
 
-
-# default_target: True
+    default_target: True
 
 
 ## leave-one-out ISC
