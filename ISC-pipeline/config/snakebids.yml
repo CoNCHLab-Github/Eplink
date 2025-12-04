@@ -33,6 +33,8 @@ fwhm:
   - 12
   - 15
   - 20
+  - 30
+  - 40
 
 # Temporal resampling configs
 resampling:
