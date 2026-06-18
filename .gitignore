@@ -1,5 +1,5 @@
 ISC-pipeline/path
-ISC-pipeline/results
+ISC-pipeline/res*
 ISC-pipeline/.snakemake
 ISC-pipeline/workflow/.snakemake
 ISC-pipeline/logs

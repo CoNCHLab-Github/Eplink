@@ -83,6 +83,16 @@ regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"path/to/bids path/to/o
 - `-a "\"path/to/bids path/to/output\""`: passes both bids and output directories to the script as one argument (space seperated).
 - `-j 8core32gb12h`: specifies job template for each participant (8 cores, 32GB RAM, 12 hours)
 
+<details>
+<summary>
+
+**Example command for phase II**
+</summary>
+
+```
+regularBatch ./run_freesurfer_bids_7.2 subjects.txt -a "\"/project/6050199/akhanf/cfmm-bids/data/Peters/tle3T_phase2/bids /scratch/alit/eplink-p2-freesurfer\"" -j 8core32gb12h
+```
+</details>
 
 ---
 <div id="step2"/>
@@ -117,6 +127,24 @@ To pull the fMRIprep reports properly on your local machine to review run the `f
 The inter-subject correlation pipline is implemented using the snakemake workflow available in this repository.
 
 ![Alt text](./ISC-pipeline/dag.svg)
+
+
+#### Configuring the pipeline
+
+**Parcellations**
+
+Here is a list of available parcellations:
+- [Desikan](https://doi.org/10.1016/j.neuroimage.2006.01.021)
+- [Glasser 2016](https://doi.org/10.1038%2Fnature18933)
+- [Schaefer 2018](https://doi.org/10.1093/cercor/bhx179)
+- [Yan 2023](https://doi.org/10.1016/j.neuroimage.2023.120010)
+
+> **Note 1:** Desikan, Glasser, and Schaefer atlas files were adopted form [this repository](https://github.com/DiedrichsenLab/fs_LR_32).
+
+> **Note 2:** Yan 2023 parcellations come in CIFTI format and were converted to .gii using wb_command:
+`
+wb_command -cifti-separate <input>.dlabel.nii COLUMN -label CORTEX_LEFT <output_L>.label.gii -label CORTEX_RIGHT <output_R>.label.gii
+`
 
 #### Setting up python virtual environment
 
