@@ -2,6 +2,7 @@
 
 import snakebids
 from snakebids import bids, generate_inputs
+import os
 from os.path import join
 import glob as _glob
 import pandas as pd
@@ -13,16 +14,38 @@ configfile: "config/snakebids.yml"
 
 H_to_hemi = dict({"L": "lh", "R": "rh"})
 
-# writes inputs_config.yml and updates config dict
-inputs = snakebids.generate_inputs(
-    bids_dir=config["fMRIprep_dir"].format(dataset=config["dataset"]),
-    pybids_inputs=config["pybids_inputs"],
-    pybids_config=["bids", "derivatives"],
-    # derivatives=config["derivatives"],
-    # participant_label=config["participant_label"],
-    # exclude_participant_label=config["exclude_participant_label"],
-    use_bids_inputs=True,
+# Load subjects from the dataset participants.tsv
+_subjects = (
+    pd.read_csv(
+        config["participants_tsv"].format(dataset=config["dataset"]),
+        sep="\t",
+    )["participant_id"]
+    .str.replace("sub-", "", regex=False)
+    .tolist()
 )
+
+# writes inputs_config.yml and updates config dict
+_fmriprep_dir = config["fMRIprep_dir"].format(dataset=config["dataset"])
+
+if os.path.isdir(_fmriprep_dir):
+    inputs = snakebids.generate_inputs(
+        bids_dir=_fmriprep_dir,
+        pybids_inputs=config["pybids_inputs"],
+        pybids_config=["bids", "derivatives"],
+        use_bids_inputs=True,
+        participant_label=_subjects,
+    )
+else:
+    # fmriprep not extracted yet — run `pixi run extract-fmriprep` first.
+    # Stub lets snakemake parse so extraction rules can be invoked.
+    class _Stub:
+        path = ""
+        wildcards = {}
+        zip_lists = {k: [] for k in ["subject","session","task","acquisition","run","space","res"]}
+    class _InputsStub:
+        subjects = _subjects
+        def __getitem__(self, k): return _Stub()
+    inputs = _InputsStub()
 
 
 # this adds constraints to the bids naming

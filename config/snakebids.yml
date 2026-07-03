@@ -4,8 +4,6 @@ sif_freesurfer: /project/6033493/shared/containers/freesurfer/freesurfer-7.2.0.s
 # path to freesurfer license file:
 fs_license: /project/6033493/shared/containers/freesurfer/freesurfer_license.txt
 
-# #participants_tsv: config/participants.tsv
-
 # Dataset configs
 dataset: EpLink3
 movie_name: movie
@@ -45,6 +43,7 @@ original_TR: 1.25
 target_TR: 2
 
 # ---
+participants_tsv: '/project/6033493/datasets/{dataset}/participants.tsv'
 # # Denoise configs
 # search_terms: {}
 # #optional: specify tar containing a particular subject'a freesurfer folder
