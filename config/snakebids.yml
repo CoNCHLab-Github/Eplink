@@ -56,6 +56,8 @@ fMRIprep_dir: 'results/{dataset}/fmriprep'
 fmriprep_tar: '/project/6033493/datasets/{dataset}/derivatives/fmriprep-20.2.6/sub-{subject}_fmriprep-20.2.6.tar.gz'
 
 archive_dir: '/project/6033493/datasets/{dataset}'
+
+wb_module: 'connectome-workbench'  # check exact name with: module spider connectome
 # output_dir: '/project/6050199/alit/EpLink/phase3'
 
 hemi:

@@ -215,7 +215,7 @@ rule convert_to_gifti:
     params:
         license=config["fs_license"],
     container:
-        config["singularity_freesurfer"]
+        config["sif_freesurfer"]
     log:
         "logs/{dataset}/convert_to_gifti/sub-{subject}_{hemi}_{surfname}.log",
     group:
@@ -236,7 +236,7 @@ rule convert_to_nifti:
     params:
         license=config["fs_license"],
     container:
-        config["singularity_freesurfer"]
+        config["sif_freesurfer"]
     log:
         "logs/{dataset}/convert_to_nifti/sub-{subject}_{volname}.log",
     group:
@@ -261,7 +261,7 @@ rule get_tkr2scanner:
     params:
         license=config["fs_license"],
     container:
-        config["singularity_freesurfer"]
+        config["sif_freesurfer"]
     log:
         "logs/{dataset}/get_tkr2scanner/sub-{subject}.log",
     group:
@@ -292,8 +292,8 @@ rule apply_surf_tkr2scanner:
             suffix="{surfname}.surf.gii",
         ),
     threads: 8
-    container:
-        config["singularity_connectome_workbench"]
+    envmodules:
+        config["wb_module"]
     log:
         "logs/{dataset}/apply_surf_tkr2scanner/sub-{subject}_{hemi}_{surfname}.log",
     group:
@@ -325,8 +325,8 @@ rule gen_midthickness:
             suffix="midthickness.surf.gii",
             space="{space}",
         ),
-    container:
-        config["singularity_connectome_workbench"]
+    envmodules:
+        config["wb_module"]
     threads: 8
     log:
         "logs/{dataset}/gen_midthickness/sub-{subject}_{hemi}_{space}.log",
@@ -401,6 +401,8 @@ rule vol2surf:
             task="{task}",
             run="{run}",
         ),
+    envmodules:
+        config["wb_module"]
     shell:
         "wb_command -volume-to-surface-mapping {input.bold} {input.midthickness} {output} -ribbon-constrained {input.white} {input.pial}"
 
@@ -441,6 +443,8 @@ rule metric_resample:
             task="{task}",
             run="{run}",
         ),
+    envmodules:
+        config["wb_module"]
     shell:
         "wb_command -metric-resample {input.vol2surf_out} {input.curr_sphere} {input.target_sphere} BARYCENTRIC {output}"
 
@@ -496,8 +500,8 @@ rule surface_smooth:
     params:
         # use canonical fsLR 32k midthickness surfaces shipped in resources
         midthick="resources/fsLR_32K_surfaces/fs_LR.32k.{hemi}.midthickness.surf.gii",
-    container:
-        config["singularity_connectome_workbench"]
+    envmodules:
+        config["wb_module"]
     log:
         "logs/{dataset}/surface_smooth/sub-{subject}_{hemi}_fwhm-{fwhm}_confounds-{confounds_idx}_task-{task}_run-{run}.log",
     threads: 2

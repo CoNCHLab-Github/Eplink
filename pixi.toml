@@ -13,7 +13,6 @@ pandas      = "2.2.*"
 nibabel     = "5.2.*"
 h5py        = ">=3.8"
 pip         = ">=24"
-connectome-workbench = ">=2.0"
 
 [pypi-dependencies]
 snakemake                       = ">=8,<9"
@@ -36,26 +35,26 @@ env = { PYTHONNOUSERSITE = "1", WB_COMMAND = "$CONDA_PREFIX/bin/wb_command" }
 
 [tasks]
 # --- fmriprep extraction (run once before the main pipeline) ---
-dry-extract-fmriprep = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until extract_fmriprep_all --dry-run"
-extract-fmriprep     = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until extract_fmriprep_all"
+dry-extract-fmriprep = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until extract_fmriprep_all --dry-run"
+extract-fmriprep     = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until extract_fmriprep_all"
 
 # --- main pipeline ---
-dry-run = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --dry-run"
-run     = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm"
+dry-run = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --dry-run"
+run     = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm"
 
 # --- individual stages ---
-dry-denoise    = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until denoise_all --dry-run"
-denoise        = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until denoise_all"
-dry-surfaces   = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until gen_midthickness_all --dry-run"
-surfaces       = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until gen_midthickness_all"
-dry-resample   = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until resample2fsLR_all --dry-run"
-resample       = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until resample2fsLR_all"
-dry-smooth     = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until smooth_all --dry-run"
-smooth         = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until smooth_all"
-dry-isc        = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until ISC_all --dry-run"
-isc            = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until ISC_all"
+dry-denoise    = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until denoise_all --dry-run"
+denoise        = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until denoise_all"
+dry-surfaces   = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until gen_midthickness_all --dry-run"
+surfaces       = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until gen_midthickness_all"
+dry-resample   = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until resample2fsLR_all --dry-run"
+resample       = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until resample2fsLR_all"
+dry-smooth     = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until smooth_all --dry-run"
+smooth         = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until smooth_all"
+dry-isc        = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until ISC_all --dry-run"
+isc            = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until ISC_all"
 
-dry-archive = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until archive_results --dry-run"
-archive     = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --profile ISC-pipeline/workflow/profiles/slurm --until archive_results"
+dry-archive = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until archive_results --dry-run"
+archive     = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until archive_results"
 
-dag = "snakemake --snakefile ISC-pipeline/workflow/Snakefile --dag | dot -Tsvg > ISC-pipeline/dag.svg"
+dag = "snakemake --snakefile workflow/Snakefile --dag | dot -Tsvg > dag.svg"

@@ -8,6 +8,7 @@
 # Per-rule mem/time overrides live in the Snakefile resources: blocks.
 
 executor: slurm
+use-envmodules: true
 
 default-resources:
   slurm_account: "rrg-conchlab_cpu"
