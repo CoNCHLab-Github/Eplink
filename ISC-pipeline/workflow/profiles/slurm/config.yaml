@@ -1,0 +1,29 @@
+# Snakemake 8 SLURM profile
+# ─────────────────────────────────────────────────────────────────────────────
+# Usage:
+#   pixi run dry-run       # check what would run
+#   pixi run run           # submit everything to SLURM
+#   pixi run extract-fmriprep   # one-time pre-step before main pipeline
+#
+# Per-rule mem/time overrides live in the Snakefile resources: blocks.
+
+executor: slurm
+
+default-resources:
+  slurm_account: "rrg-conchlab_cpu"
+
+  mem_mb:        32000   # 16 GB
+  cpus_per_task: 8
+  runtime:       60      # minutes
+  nodes:         1
+
+jobname:          "{rule}.{wildcards}.{jobid}"
+jobs:             100
+retries:          2
+latency-wait:     60
+keep-going:       true
+rerun-incomplete: true
+rerun-triggers:
+  - mtime
+  - params
+  - input
