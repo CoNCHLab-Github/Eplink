@@ -1,15 +1,13 @@
-singularity_freesurfer: /project/6050199/akhanf/singularity/bids-apps/freesurfer_7.2.0_withsubfields.sif
-#singularity_freesurfer: docker://bids/freesurfer:v6.0.1-5
-singularity_connectome_workbench: /project/6050199/akhanf/singularity/connectome-workbench_latest.simg
-#singularity_connectome_workbench: docker://khanlab/connectome-workbench:latest
+# path to freesurfer image
+sif_freesurfer: /project/6033493/shared/containers/freesurfer/freesurfer-7.2.0.sif
 
-# path to your freesurfer license file:
-fs_license: /project/6050199/akhanf/opt/freesurfer/.license
+# path to freesurfer license file:
+fs_license: /project/6033493/shared/containers/freesurfer/freesurfer_license.txt
 
 # #participants_tsv: config/participants.tsv
 
 # Dataset configs
-dataset: eplink-p3
+dataset: EpLink3
 movie_name: movie
 n_dummies: 0
 n_volumes: 384
@@ -50,11 +48,15 @@ target_TR: 2
 # # Denoise configs
 # search_terms: {}
 # #optional: specify tar containing a particular subject'a freesurfer folder
-freesurfer: '/project/6033493/trainees/current/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2/sub-{subject}'
-freesurfer_root: '/project/6033493/trainees/current/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2'
-freesurfer_tar: '/project/6033493/trainees/current/alit/EpLink/{dataset}-freesurfer/freesurfer_7.2/sub-{subject}.tar'
+freesurfer_root: 'results/{dataset}/freesurfer'
+freesurfer: 'results/{dataset}/freesurfer/sub-{subject}'
+freesurfer_tar: '/project/6033493/datasets/{dataset}/derivatives/freesurfer-7.2.0/sub-{subject}_freesurfer-7.2.0.tar.gz'
 
-fMRIprep_dir: '/project/6033493/trainees/current/alit/EpLink/{dataset}-fMRIprep-freesurfer'
+# run `snakemake extract_fmriprep_all` first to populate this directory
+fMRIprep_dir: 'results/{dataset}/fmriprep'
+fmriprep_tar: '/project/6033493/datasets/{dataset}/derivatives/fmriprep-20.2.6/sub-{subject}_fmriprep-20.2.6.tar.gz'
+
+archive_dir: '/project/6033493/datasets/{dataset}'
 # output_dir: '/project/6050199/alit/EpLink/phase3'
 
 hemi:
