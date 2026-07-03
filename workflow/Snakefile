@@ -32,7 +32,6 @@ if os.path.isdir(_fmriprep_dir):
         bids_dir=_fmriprep_dir,
         pybids_inputs=config["pybids_inputs"],
         pybids_config=["bids", "derivatives"],
-        use_bids_inputs=True,
         participant_label=_subjects,
     )
 else:
@@ -79,9 +78,13 @@ rule extract_fmriprep:
         ),
     output:
         directory("results/{dataset}/fmriprep/sub-{subject}"),
+    resources:
+        mem_mb=4000,
+        cpus_per_task=1,
+        runtime=30,
     shell:
-        "mkdir -p results/{wildcards.dataset}/fmriprep && "
-        "tar -C results/{wildcards.dataset}/fmriprep -xf {input.tar}"
+        "mkdir -p results/{wildcards.dataset} && "
+        "tar -C results/{wildcards.dataset} -xf {input.tar}"
 
 rule extract_fmriprep_all:
     input:
@@ -175,6 +178,10 @@ rule extract_from_tar:
             "{modality,surf|mri}",
             "{filename}",
         ),
+    resources:
+        mem_mb=4000,
+        cpus_per_task=1,
+        runtime=30,
     group:
         "participant1"
     shell:

@@ -86,9 +86,8 @@ pybids_inputs:
       suffix: bold
       desc: preproc
       extension: .nii.gz
-      # scope: derivatives    # raw, derivatives (or can be pipeline name too!)
-      # invalid_filters: allow
       datatype: func
+      space: T1w
       run: true
     wildcards:
       - subject
@@ -96,16 +95,14 @@ pybids_inputs:
       - task
       - acquisition
       - run
-      - space
-      - res
 
   preproc_mask:
     filters:
       suffix: mask
       desc: brain
       extension: .nii.gz
-      #scope: derivatives    # raw, derivatives (or can be pipeline name too!)
       datatype: func
+      space: T1w
       run: true
     wildcards:
       - subject
@@ -113,8 +110,6 @@ pybids_inputs:
       - task
       - acquisition
       - run
-      - space
-      - res
 
   confounds:
     filters:
