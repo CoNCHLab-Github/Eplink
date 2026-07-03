@@ -95,6 +95,7 @@ pybids_inputs:
       - task
       - acquisition
       - run
+      - space
 
   preproc_mask:
     filters:
@@ -110,6 +111,7 @@ pybids_inputs:
       - task
       - acquisition
       - run
+      - space
 
   confounds:
     filters:
