@@ -217,7 +217,7 @@ rule convert_to_gifti:
             subject="{subject}",
             hemi="{hemi}",
             suffix="{surfname}.surf.gii",
-            space="fsaverage",
+            space="fsnative",
         ),
     params:
         license=config["fs_license"],
@@ -289,7 +289,7 @@ rule apply_surf_tkr2scanner:
             subject="{subject}",
             hemi="{hemi}",
             suffix="{surfname}.surf.gii",
-            space="fsaverage",
+            space="fsnative",
         ),
         tkr2scanner=bids(
             root="results/{dataset}/midthickness",
@@ -441,7 +441,7 @@ rule metric_resample:
             root="results/{dataset}/midthickness",
             subject="{subject}",
             hemi="{hemi}",
-            space="fsaverage",
+            space="fsnative",
             suffix="sphere.reg.surf.gii",
         ),
         target_sphere="resources/standard_mesh_atlases/resample_fsaverage/fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii",
