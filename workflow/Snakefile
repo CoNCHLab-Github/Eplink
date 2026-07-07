@@ -208,6 +208,9 @@ def get_gifti_input(wildcards):
             ),
         )
 
+## sphere.reg is only used as a topological resampling target (metric_resample),
+## so it's kept in raw FreeSurfer tkr-native coordinates -- no scanner-space
+## correction needed (or wanted: it would displace it off the unit sphere).
 rule convert_to_gifti:
     input:
         get_gifti_input,
@@ -229,91 +232,40 @@ rule convert_to_gifti:
         mem_mb=8000,
         cpus_per_task=2,
         runtime=20,
+    wildcard_constraints:
+        surfname="sphere.reg",
     shell:
         "FS_LICENSE={params.license} mris_convert {input} {output} &> {log}"
 
 
-rule convert_to_nifti:
+## white/pial are converted straight to scanner-RAS (same physical space as the
+## fMRIPrep T1w-space BOLD) via mris_convert --to-scanner, so no separate
+## tkr2scanner affine + wb_command apply-affine step is needed.
+rule convert_to_gifti_native:
     input:
-        join(config["freesurfer"], "mri", "{volname}.mgz"),
+        get_gifti_input,
     output:
         bids(
             root="results/{dataset}/midthickness",
             subject="{subject}",
-            suffix="{volname}.nii.gz",
-        ),
-    params:
-        license=config["fs_license"],
-    container:
-        config["sif_freesurfer"]
-    log:
-        "logs/{dataset}/convert_to_nifti/sub-{subject}_{volname}.log",
-    resources:
-        mem_mb=8000,
-        cpus_per_task=2,
-        runtime=20,
-    shell:
-        "FS_LICENSE={params.license} mri_convert {input} {output} &> {log}"
-
-
-rule get_tkr2scanner:
-    input:
-        t1=bids(
-            root="results/{dataset}/midthickness",
-            subject="{subject}",
-            suffix="T1.nii.gz",
-        ),
-    output:
-        tkr2scanner=bids(
-            root="results/{dataset}/midthickness",
-            subject="{subject}",
-            suffix="tkr2scanner.xfm",
-        ),
-    params:
-        license=config["fs_license"],
-    container:
-        config["sif_freesurfer"]
-    log:
-        "logs/{dataset}/get_tkr2scanner/sub-{subject}.log",
-    resources:
-        mem_mb=8000,
-        cpus_per_task=2,
-        runtime=20,
-    shell:
-        "FS_LICENSE={params.license} mri_info {input.t1} --tkr2scanner > {output.tkr2scanner} 2> {log}"
-
-rule apply_surf_tkr2scanner:
-    input:
-        surf=bids(
-            root="results/{dataset}/midthickness",
-            subject="{subject}",
             hemi="{hemi}",
             suffix="{surfname}.surf.gii",
-            space="fsnative",
-        ),
-        tkr2scanner=bids(
-            root="results/{dataset}/midthickness",
-            subject="{subject}",
-            suffix="tkr2scanner.xfm",
-        ),
-    output:
-        surf=bids(
-            root="results/{dataset}/midthickness",
-            subject="{subject}",
-            hemi="{hemi}",
             space="native",
-            suffix="{surfname}.surf.gii",
         ),
-    envmodules:
-        config["wb_module"]
+    params:
+        license=config["fs_license"],
+    container:
+        config["sif_freesurfer"]
     log:
-        "logs/{dataset}/apply_surf_tkr2scanner/sub-{subject}_{hemi}_{surfname}.log",
+        "logs/{dataset}/convert_to_gifti_native/sub-{subject}_{hemi}_{surfname}.log",
     resources:
         mem_mb=8000,
         cpus_per_task=2,
         runtime=20,
+    wildcard_constraints:
+        surfname="white|pial",
     shell:
-        "wb_command -surface-apply-affine {input.surf} {input.tkr2scanner} {output.surf} &> {log}"
+        "FS_LICENSE={params.license} mris_convert --to-scanner {input} {output} &> {log}"
 
 rule gen_midthickness:
     input:
