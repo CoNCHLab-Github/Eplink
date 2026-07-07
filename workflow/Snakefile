@@ -184,8 +184,6 @@ rule extract_from_tar:
         mem_mb=4000,
         cpus_per_task=1,
         runtime=30,
-    group:
-        "participant1"
     shell:
         "mkdir -p {params.out_folder} && tar -C {params.out_folder} --extract --file={input.tar} {params.file_in_tar}"
 
@@ -227,8 +225,10 @@ rule convert_to_gifti:
         config["sif_freesurfer"]
     log:
         "logs/{dataset}/convert_to_gifti/sub-{subject}_{hemi}_{surfname}.log",
-    group:
-        "participant1"
+    resources:
+        mem_mb=8000,
+        cpus_per_task=2,
+        runtime=20,
     shell:
         "FS_LICENSE={params.license} mris_convert {input} {output} &> {log}"
 
@@ -248,8 +248,10 @@ rule convert_to_nifti:
         config["sif_freesurfer"]
     log:
         "logs/{dataset}/convert_to_nifti/sub-{subject}_{volname}.log",
-    group:
-        "participant1"
+    resources:
+        mem_mb=8000,
+        cpus_per_task=2,
+        runtime=20,
     shell:
         "FS_LICENSE={params.license} mri_convert {input} {output} &> {log}"
 
@@ -273,8 +275,10 @@ rule get_tkr2scanner:
         config["sif_freesurfer"]
     log:
         "logs/{dataset}/get_tkr2scanner/sub-{subject}.log",
-    group:
-        "participant1"
+    resources:
+        mem_mb=8000,
+        cpus_per_task=2,
+        runtime=20,
     shell:
         "FS_LICENSE={params.license} mri_info {input.t1} --tkr2scanner > {output.tkr2scanner} 2> {log}"
 
@@ -300,13 +304,14 @@ rule apply_surf_tkr2scanner:
             space="native",
             suffix="{surfname}.surf.gii",
         ),
-    threads: 8
     envmodules:
         config["wb_module"]
     log:
         "logs/{dataset}/apply_surf_tkr2scanner/sub-{subject}_{hemi}_{surfname}.log",
-    group:
-        "participant1"
+    resources:
+        mem_mb=8000,
+        cpus_per_task=2,
+        runtime=20,
     shell:
         "wb_command -surface-apply-affine {input.surf} {input.tkr2scanner} {output.surf} &> {log}"
 
@@ -336,11 +341,12 @@ rule gen_midthickness:
         ),
     envmodules:
         config["wb_module"]
-    threads: 8
     log:
         "logs/{dataset}/gen_midthickness/sub-{subject}_{hemi}_{space}.log",
-    group:
-        "participant1"
+    resources:
+        mem_mb=8000,
+        cpus_per_task=2,
+        runtime=20,
     shell:
         "wb_command -surface-average {output.midthickness} -surf {input.white} -surf {input.pial} &> {log}"
 

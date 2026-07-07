@@ -9,6 +9,7 @@
 
 executor: slurm
 use-envmodules: true
+software-deployment-method: [apptainer, env-modules]
 
 default-resources:
   slurm_account: "rrg-conchlab_cpu"
