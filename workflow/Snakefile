@@ -27,23 +27,24 @@ _subjects = (
 # writes inputs_config.yml and updates config dict
 _fmriprep_dir = config["fMRIprep_dir"].format(dataset=config["dataset"])
 
-if os.path.isdir(_fmriprep_dir):
+class _Stub:
+    path = ""
+    wildcards = {}
+    zip_lists = {k: [] for k in ["subject","session","task","acquisition","run","space","res"]}
+class _InputsStub:
+    subjects = _subjects
+    def __getitem__(self, k): return _Stub()
+
+try:
     inputs = snakebids.generate_inputs(
         bids_dir=_fmriprep_dir,
         pybids_inputs=config["pybids_inputs"],
         pybids_config=["bids", "derivatives"],
         participant_label=_subjects,
     )
-else:
-    # fmriprep not extracted yet — run `pixi run extract-fmriprep` first.
+except Exception:
+    # fmriprep not yet extracted (or not enough subjects present).
     # Stub lets snakemake parse so extraction rules can be invoked.
-    class _Stub:
-        path = ""
-        wildcards = {}
-        zip_lists = {k: [] for k in ["subject","session","task","acquisition","run","space","res"]}
-    class _InputsStub:
-        subjects = _subjects
-        def __getitem__(self, k): return _Stub()
     inputs = _InputsStub()
 
 
@@ -77,19 +78,19 @@ rule extract_fmriprep:
             dataset=wildcards.dataset, subject=wildcards.subject
         ),
     output:
-        directory("results/{dataset}/fmriprep/sub-{subject}"),
+        touch("results/{dataset}/fmriprep/sub-{subject}/.extracted"),
     resources:
         mem_mb=4000,
         cpus_per_task=1,
         runtime=30,
     shell:
         "mkdir -p results/{wildcards.dataset} && "
-        "tar -C results/{wildcards.dataset} -xf {input.tar}"
+        "tar --skip-old-files -C results/{wildcards.dataset} -xf {input.tar}"
 
 rule extract_fmriprep_all:
     input:
         expand(
-            "results/{dataset}/fmriprep/sub-{subject}",
+            "results/{dataset}/fmriprep/sub-{subject}/.extracted",
             dataset=config["dataset"],
             subject=_fmriprep_subjects_from_tars(),
         ),
@@ -106,6 +107,7 @@ rule denoise:
         json=re.sub(".nii.gz", ".json", inputs["preproc_bold"].path),
         confounds_tsv=inputs["confounds"].path,
         mask_nii=inputs["preproc_mask"].path,
+        extracted="results/{dataset}/fmriprep/sub-{subject}/.extracted",
     params:
         confounds_to_use=lambda wildcards: config["confounds"][
             int(wildcards.confounds_idx) - 1
