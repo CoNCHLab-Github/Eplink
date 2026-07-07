@@ -104,9 +104,13 @@ pybids_inputs:
       extension: .nii.gz
       datatype: func
       space: T1w
+      run: true
     wildcards:
       - subject
       - session
+      - task
+      - acquisition
+      - run
       - space
 
   confounds:
