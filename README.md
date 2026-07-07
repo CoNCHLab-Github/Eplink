@@ -11,17 +11,29 @@ The current repository stores codes used for stimulus presentation and analyzing
 - [Preprocessing](#preprocessing)
     - [Step 1: freesurfer 7.2](#step1)
     - [Step 2: fMRIprep 20.2.6](#step2)
-    - [Step 3: ISC pipeline (snakemake)](#step3)
+    - [Step 3: ISC pipeline (snakemake + SLURM, via pixi)](#step3)
 
 ## Datasets
 
-Raw data is available in BIDS format on Graham (ComputeCanada):
+Raw data and derivatives are available in BIDS format on Nibi (Alliance Canada), under the CoNCH lab's allocation:
 
-| dataset   | path                                                                       | symbolic links                                     |
-|-----------|----------------------------------------------------------------------------|----------------------------------------------------|
-| Phase II  | `/project/6050199/khanlab/datasets/internal/Peters_EpLink/tle3T_phase2/`   | `/project/6050199/alit/EpLink/datasets/eplink-p2`  |
-| Phase III | `/project/6050199/khanlab/datasets/internal/Burneo_EpLinkPhase3_Baseline/` | `/project/6050199/alit/EpLink/datasets/eplink-p3`  |
-| TWH       | `/project/6050199/khanlab/datasets/external/eplink_phase3`                 | `/project/6050199/alit/EpLink/datasets/eplink-twh` |
+| dataset            | path                                        | notes                                                                                                    |
+|--------------------|----------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| EpLink3 (Phase III) | `/project/6033493/datasets/EpLink3`         | `dataset_description.json` calls it `EpLink_merged`: combines the original EpLink3 cohort (syngo MR E11) with an additional healthy-control cohort, EpLink_newHC (syngo MR XA60). Cohort is recorded per-subject in `participants.tsv`. freesurfer/fmriprep derivatives already present as per-subject tar.gz (see below). |
+| EpLink2 (Phase II)  | `/project/6033493/datasets/EpLink2/rawdata` | Raw BIDS data only; freesurfer/fmriprep derivatives have not yet been generated under this allocation.  |
+
+Each dataset directory follows the same layout, which the pipeline's config templates against (`config/snakebids.yml`):
+
+```
+/project/6033493/datasets/<dataset>/
+├── participants.tsv
+├── dataset_description.json
+└── derivatives/
+    ├── freesurfer-7.2.0/sub-<id>_freesurfer-7.2.0.tar.gz
+    └── fmriprep-20.2.6/sub-<id>_fmriprep-20.2.6.tar.gz
+```
+
+Which dataset is processed is controlled entirely by the `dataset:` key in `config/snakebids.yml` (currently `EpLink3`) — it gets substituted into every `{dataset}`-templated path in the config (`participants_tsv`, `freesurfer_tar`, `fmriprep_tar`, `archive_dir`, ...).
 
 ### Phase II
 
@@ -47,15 +59,26 @@ use `squeue` or `sq` command to list Slurm jobs. `squeue` supplies information a
 <div id="sshfs"/>
 
 #### mounting compute canada as a file system using sshfs:
-1. create a directory for the mount if you don't have one: `mkdir ~/Graham`
-2. use sshfs to mount as a directory on computecanada file system: ```sshfs <username>@graham.computecanada.ca:/home/<username>/projects/ctb-akhanf/<username> ~/Graham```
+1. create a directory for the mount if you don't have one: `mkdir ~/Nibi`
+2. use sshfs to mount as a directory on computecanada file system: ```sshfs <username>@nibi.sharcnet.ca:/home/<username> ~/Nibi```
 3. You will be asked for your password and 2FA if applicable.
 
-### neuroglia-helpers
+### pixi
 
-### snakemake and snakebids
+The ISC pipeline's Python environment (snakemake, snakebids, nilearn, etc.) and its run commands are managed by [pixi](https://pixi.sh) — dependencies are pinned in `pixi.toml`/`pixi.lock` so the environment is reproducible across machines.
+
+1. Install pixi once (works on Nibi or locally): `curl -fsSL https://pixi.sh/install.sh | bash`
+2. From the repo root, create the environment: `pixi install`
+3. Run any pipeline command through pixi — it resolves and activates the environment automatically, no manual `source activate`/`venv` step needed:
+   ```
+   pixi run <task>
+   ```
+4. See the full list of available tasks with `pixi task list`, or read the `[tasks]` table in `pixi.toml`. Tasks are described in [Step 3](#step3) below.
+5. An optional `dev` environment (`pytest`, `ipython`, `jupyterlab`) is available via `pixi run -e dev <task>`.
 
 ### wb-command
+
+`wb_command` (Connectome Workbench) is not installed via pixi. On Nibi it's loaded as an environment module — the module name is set by `wb_module` in `config/snakebids.yml` (default: `connectome-workbench`; find the exact name with `module spider connectome`). Rules that call `wb_command` declare `envmodules: config["wb_module"]`, and Snakemake loads it automatically for SLURM-submitted jobs because the profile sets `use-envmodules: true` (see [Step 3](#step3)).
 
 ## Preprocessing
 
@@ -117,17 +140,50 @@ bidsBatch fmriprep_20.2.6 <bids_dir> <output_dir> participant --output-spaces MN
 - `--fs-subjects-dir` is the path to freesurfer output (default: OUTPUT_DIR/freesurfer).
 
 #### Reviewing fMRIprep reports:
-To pull the fMRIprep reports properly on your local machine to review run the `fetch_fMRIprep_reports.sh` script (included in the repository). You might need to adjust the fMRIprep output path in the script. This script assumes that graham is mounted as a file system at `~/Graham`, if it isn't check [here](#sshfs) for instructions.
+To pull the fMRIprep reports properly on your local machine to review run the `fetch_fMRIprep_reports.sh` script (included in the repository). You might need to adjust the fMRIprep output path in the script. This script assumes that Nibi is mounted as a file system at `~/Nibi`, if it isn't check [here](#sshfs) for instructions.
 
 ---
 <div id="step3"/>
 
-### Step 3: ISC pipeline (snakemake)
+### Step 3: ISC pipeline (snakemake + SLURM, via pixi)
 
-The inter-subject correlation pipline is implemented using the snakemake workflow available in this repository.
+The inter-subject correlation pipeline is implemented as a [snakebids](https://snakebids.readthedocs.io)-wrapped Snakemake workflow: `workflow/Snakefile` (rules) + `config/snakebids.yml` (dataset selection, parcellations, confounds, smoothing levels, etc.). All commands are run through `pixi run <task>` (see [pixi setup](#setup)), which activates the pinned environment for you — no manual venv/module activation needed for the Python side.
 
-![Alt text](./ISC-pipeline/dag.svg)
+```
+pixi install                     # once, creates the pinned environment
+pixi run dry-run                 # sanity-check the DAG (snakemake -n)
+pixi run extract-fmriprep        # one-time: untar fmriprep derivatives (see below)
+pixi run run                     # submit the rest of the pipeline to SLURM
+```
 
+#### How jobs get submitted to SLURM
+
+`workflow/profiles/slurm/config.yaml` is a Snakemake 8 [executor profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) built on `snakemake-executor-plugin-slurm` (pinned in `pixi.toml`). Every `pixi run` pipeline task passes `--profile workflow/profiles/slurm` to snakemake, so when you invoke it snakemake:
+
+- resolves the DAG of missing output files for the target rule,
+- submits each job individually to SLURM (`sbatch`) under `slurm_account: rrg-conchlab_cpu`,
+- applies default resources (`mem_mb: 32000`, `cpus_per_task: 8`, `runtime: 60` min) unless a rule overrides them in its own `resources:` block in the Snakefile,
+- loads environment modules (e.g. `wb_command`) for rules that declare `envmodules:`, since the profile sets `use-envmodules: true`,
+- retries failed jobs twice (`retries: 2`) and keeps unrelated jobs running on failure (`keep-going: true`),
+- runs up to 100 jobs concurrently (`jobs: 100`).
+
+You do not write or submit an `sbatch` script yourself — run `pixi run run` (or any of the stage-specific tasks below) from a login node or inside `regularInteractive`, and Snakemake handles submission, polling, and resubmission for every rule. Use `squeue`/`sq` (see [above](#computecanada)) to watch the submitted jobs.
+
+#### Pipeline stages and matching pixi tasks
+
+Each stage has a `dry-<stage>` (adds `--dry-run`) and a `<stage>` (submits for real) pixi task:
+
+| stage | snakemake target | pixi tasks | what it does |
+|---|---|---|---|
+| fMRIprep extraction | `extract_fmriprep_all` | `dry-extract-fmriprep`, `extract-fmriprep` | untars each subject's `fmriprep-20.2.6` derivatives tar into `results/{dataset}/fmriprep/`. **Must run once before the rest of the pipeline** — later rules read from this extracted directory. |
+| denoising | `denoise_all` | `dry-denoise`, `denoise` | nilearn-based confound regression on the T1w-space preprocessed BOLD (`workflow/scripts/denoise.py`), per confound set in `config["confounds"]`. |
+| surfaces | `gen_midthickness_all` | `dry-surfaces`, `surfaces` | extracts freesurfer surfaces from `freesurfer_tar`, converts to GIFTI, and builds native-space midthickness surfaces (needs the freesurfer container + `wb_command`). |
+| resampling | `resample2fsLR_all` | `dry-resample`, `resample` | projects denoised volumes onto the native surface, then resamples to fsLR 32k. |
+| smoothing | `smooth_all` | `dry-smooth`, `smooth` | surface smoothing at each `fwhm` in `config["fwhm"]`. |
+| ISC | `ISC_all` | `dry-isc`, `isc` | pairwise and leave-one-out ISC (vertex-level and per-parcellation) plus functional connectivity. |
+| archiving | `archive_results` | `dry-archive`, `archive` | packages `results/{dataset}` into a SquashFS image under `archive_dir` (the dataset's project-space directory). |
+| everything | (default target) | `dry-run`, `run` | runs the full DAG up to the pipeline's default target. |
+| DAG visualization | — | `dag` | `snakemake --dag \| dot -Tsvg > dag.svg` |
 
 #### Configuring the pipeline
 
@@ -146,47 +202,19 @@ Here is a list of available parcellations:
 wb_command -cifti-separate <input>.dlabel.nii COLUMN -label CORTEX_LEFT <output_L>.label.gii -label CORTEX_RIGHT <output_R>.label.gii
 `
 
-#### Setting up python virtual environment
+#### Troubleshooting: locked directory
 
-1. Set up a virtual environment: `python3.9 -m venv ~/venv-eplink`
-2. Activate the environment: `source ~/venv-eplink/bin/activate`
-3. Update pip: `pip install --upgrade pip`
-4. Install dependencies: `pip install -r requirements.txt`
-
-You can find the `requirements.txt` file in this repository. 
-
-#### Dry run
-Make sure you have activated the virtual environment:
-
-```source ~/venv-eplink/bin/activate```
-
-Change directory to the pipeline folder:
-
-```cd ISC-pipeline```
-
-Dry run does not execute anything, and display what would be done. You can use `--dry-run`, `--dryrun`, or `-n` options to see the missing files and the rules that will make them. You can combine dryrun with `--quiet` or `-q` to just print a summary of the DAG of jobs.
-
-```snakemake -nq```
-
-You can save the extended output of the dry run to a file for examining later:
-
-```snakemake -n > dryrun.txt```
-
-#### Generate a dag of rules (visualize the pipeline) 
-```snakemake --forceall --rulegraph | dot -Tsvg > dag.svg```
-
-#### Running the pipeline
-
-1. `regularInteractive`
-2. Load freesurfer module: `module load freesurfer/7.2.0`
-3. `snakemake -c8`
-
-If snakemake had stopped unexpectedly (e.g., due to job running out of time, or power outage) you'll get the following error indicating that the directory is already locked by an instance of snakemake:
+If snakemake stopped unexpectedly (e.g., a job ran out of time, or a power outage) you'll get an error indicating the run directory is locked by a previous instance:
 
 ```
 LockException:
 Error: Directory cannot be locked. Please make sure that no other Snakemake process is trying to create the same files in the following directory:
-/project/6050199/alit/EpLink/Eplink/ISC-pipeline
+...
 If you are sure that no other instances of snakemake are running on this directory, the remaining lock was likely caused by a kill signal or a power loss. It can be removed with the --unlock argument.
 ```
-As mentioned in the message above, if you are sure that no other snakemake instance is running in this directory you can unlock it by `snakemake --unlock` first, and then run snakemake as per usual.
+
+If you're sure no other snakemake instance is running, unlock it first, then rerun as usual:
+
+```
+pixi run snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --unlock
+```
