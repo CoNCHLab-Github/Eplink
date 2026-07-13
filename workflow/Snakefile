@@ -401,7 +401,7 @@ rule metric_resample:
         target_sphere="resources/standard_mesh_atlases/resample_fsaverage/fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii",
     output:
         bids(
-            root="results/{dataset}/resampled2fsLR/32k_space_surfaces",
+            root="results/{dataset}/resampled2fsLR32k",
             datatype="func",
             desc="denoised",
             confounds="{confounds_idx}",
@@ -442,7 +442,7 @@ rule resample2fsLR_all:
 rule surface_smooth:
     input:
         in_metric=bids(
-            root="results/{dataset}/resampled2fsLR/32k_space_surfaces",
+            root="results/{dataset}/resampled2fsLR32k",
             datatype="func",
             desc="denoised",
             confounds="{confounds_idx}",
@@ -609,7 +609,7 @@ rule parcellate_original_all:
                 allow_missing=True,
             ),
             dataset=config["dataset"],
-            source="resampled2fsLR/32k_space_surfaces",
+            source="resampled2fsLR32k",
             confounds_idx=range(1, len(config["confounds"]) + 1),
             hemi=config["hemi"],
             atlas=config["parcellations"],
@@ -623,7 +623,7 @@ def FC_gen_inputs(wildcards):
     if wildcards.resampled == "Y":
         source = "temporalResampled-parcellated"
     else:
-        source = "resampled2fsLR/32k_space_surfaces-parcellated"
+        source = "resampled2fsLR32k-parcellated"
     
     inputs = expand(
             bids(root=f"results/{wildcards.dataset}/{source}/{wildcards.atlas}",
@@ -698,7 +698,7 @@ def ISC_gen_inputs(wildcards):
     if wildcards.resampled == "Y":
         source = "temporalResampled"
     else:
-        source = "resampled2fsLR/32k_space_surfaces"
+        source = "resampled2fsLR32k"
 
     if wildcards.atlas == "none":
         source = "smoothed"
@@ -893,7 +893,7 @@ rule tSNR_parcellated:
                         allow_missing=True,
                     ),
                 dataset=config["dataset"],
-                source="resampled2fsLR/32k_space_surfaces",
+                source="resampled2fsLR32k",
                 confounds_idx=range(1, len(config["confounds"]) + 1),
                 hemi=config["hemi"],
                 atlas=config["parcellations"],
