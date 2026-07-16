@@ -470,6 +470,9 @@ rule surface_smooth:
     params:
         # use canonical fsLR 32k midthickness surfaces shipped in resources
         midthick="resources/fsLR_32K_surfaces/fs_LR.32k.{hemi}.midthickness.surf.gii",
+        # this wb_command build's -metric-smoothing has no -fwhm flag; it only
+        # takes a sigma, so convert FWHM -> sigma ourselves (FWHM = sigma * sqrt(8*ln(2)))
+        sigma=lambda wc: float(wc.fwhm) / 2.3548200450309493,
     envmodules:
         "apptainer",
         config["wb_module"]
@@ -481,7 +484,7 @@ rule surface_smooth:
         "if [ {wildcards.fwhm} -eq 0 ]; then \n"
         "  cp {input.in_metric} {output} 2> {log}; \n"
         "else \n"
-        "  wb_command -metric-smoothing {params.midthick} {input.in_metric} -fwhm {wildcards.fwhm} {output} &> {log}; \n"
+        "  wb_command -metric-smoothing {params.midthick} {input.in_metric} {params.sigma} {output} &> {log}; \n"
         "fi"
 
 # Dummy rule
