@@ -55,6 +55,8 @@ dry-parcellate = "snakemake --snakefile workflow/Snakefile --profile workflow/pr
 parcellate     = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until parcellate_original_all"
 dry-isc        = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until ISC_all --dry-run"
 isc            = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until ISC_all"
+dry-pwisc-swb  = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until pwISC_bootstrap_movie --dry-run"
+pwisc-swb      = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until pwISC_bootstrap_movie"
 
 dry-archive = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until archive_results --dry-run"
 archive     = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until archive_results"

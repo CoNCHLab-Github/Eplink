@@ -39,6 +39,46 @@ resampling:
   - N
   # - Y
 
+# Pairwise ISC significance testing (subject-wise bootstrap, Chen et al., 2016)
+n_perm_bootstrap: 10000
+bootstrap_seed:
+
+# Subjects to exclude from control/patient group analyses (e.g. QC failures)
+subjid_exclude:
+  - 68
+  - 75
+  - 76
+  - 79
+  - 80
+  - 84
+  - 86
+  - 90
+  - 91
+  - 94
+  - 5089
+  - 5092
+  - 5105
+  - 7
+  - 9
+  - 10
+  - 12
+  - 18
+  - 21
+  - 22
+  - 32
+  - 35
+  - 38
+  - 5210
+  - 5212
+  - 5217
+  - 5218
+  - 5219
+  - 5222
+  - 5223
+  - 5225
+  - 5226
+  - 5227
+
 original_TR: 1.25 
 target_TR: 2
 
