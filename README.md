@@ -50,7 +50,16 @@ This data is collected from epileptic patients, and age and sex matched healthy 
 
 ## Setup
 
-### computecanada
+### 1. Get access and clone the repository
+
+The pipeline reads datasets from the CoNCH lab's Alliance Canada allocation (`/project/6033493/...`, account `rrg-conchlab_cpu`) and submits SLURM jobs on Nibi — you need an active Alliance Canada account with access to that allocation before anything else here will work (ask the PI if you don't have this yet).
+
+Clone the repo on Nibi (e.g. into your `/scratch/<username>` space, since that's where the pipeline's `results/` outputs land):
+```
+git clone https://github.com/CoNCHLab-Github/Eplink.git
+```
+
+### 2. computecanada
 
 #### checking the submitted jobs and their status
 
@@ -63,7 +72,7 @@ use `squeue` or `sq` command to list Slurm jobs. `squeue` supplies information a
 2. use sshfs to mount as a directory on computecanada file system: ```sshfs <username>@nibi.sharcnet.ca:/home/<username> ~/Nibi```
 3. You will be asked for your password and 2FA if applicable.
 
-### pixi
+### 3. pixi
 
 The ISC pipeline's Python environment (snakemake, snakebids, nilearn, etc.) and its run commands are managed by [pixi](https://pixi.sh) — dependencies are pinned in `pixi.toml`/`pixi.lock` so the environment is reproducible across machines.
 
@@ -76,9 +85,9 @@ The ISC pipeline's Python environment (snakemake, snakebids, nilearn, etc.) and 
 4. See the full list of available tasks with `pixi task list`, or read the `[tasks]` table in `pixi.toml`. Tasks are described in [Step 3](#step3) below.
 5. An optional `dev` environment (`pytest`, `ipython`, `jupyterlab`) is available via `pixi run -e dev <task>`.
 
-### wb-command
+### 4. wb-command
 
-`wb_command` (Connectome Workbench) is not installed via pixi. On Nibi it's loaded as an environment module — the module name is set by `wb_module` in `config/snakebids.yml` (default: `connectome-workbench`; find the exact name with `module spider connectome`). Rules that call `wb_command` declare `envmodules: config["wb_module"]`, and Snakemake loads it automatically for SLURM-submitted jobs because the profile sets `use-envmodules: true` (see [Step 3](#step3)).
+`wb_command` (Connectome Workbench) is not installed via pixi. On Nibi it's loaded as an environment module — the module name is set by `wb_module` in `config/snakebids.yml` (default: `connectome-workbench`; find the exact name with `module spider connectome`). Rules that call `wb_command` also load `apptainer` alongside it (some `wb_command` operations shell out to a containerized helper), and Snakemake loads both modules automatically for SLURM-submitted jobs because the profile sets `use-envmodules: true` (see [Step 3](#step3)).
 
 ## Preprocessing
 
@@ -173,17 +182,19 @@ You do not write or submit an `sbatch` script yourself — run `pixi run run` (o
 
 Each stage has a `dry-<stage>` (adds `--dry-run`) and a `<stage>` (submits for real) pixi task:
 
-| stage | snakemake target | pixi tasks | what it does |
-|---|---|---|---|
-| fMRIprep extraction | `extract_fmriprep_all` | `dry-extract-fmriprep`, `extract-fmriprep` | untars each subject's `fmriprep-20.2.6` derivatives tar into `results/{dataset}/fmriprep/`. **Must run once before the rest of the pipeline** — later rules read from this extracted directory. |
-| denoising | `denoise_all` | `dry-denoise`, `denoise` | nilearn-based confound regression on the T1w-space preprocessed BOLD (`workflow/scripts/denoise.py`), per confound set in `config["confounds"]`. |
-| surfaces | `gen_midthickness_all` | `dry-surfaces`, `surfaces` | extracts freesurfer surfaces from `freesurfer_tar`, converts to GIFTI, and builds native-space midthickness surfaces (needs the freesurfer container + `wb_command`). |
-| resampling | `resample2fsLR_all` | `dry-resample`, `resample` | projects denoised volumes onto the native surface, then resamples to fsLR 32k. |
-| smoothing | `smooth_all` | `dry-smooth`, `smooth` | surface smoothing at each `fwhm` in `config["fwhm"]`. |
-| ISC | `ISC_all` | `dry-isc`, `isc` | pairwise and leave-one-out ISC (vertex-level and per-parcellation) plus functional connectivity. |
-| archiving | `archive_results` | `dry-archive`, `archive` | packages `results/{dataset}` into a SquashFS image under `archive_dir` (the dataset's project-space directory). |
-| everything | (default target) | `dry-run`, `run` | runs the full DAG up to the pipeline's default target. |
-| DAG visualization | — | `dag` | `snakemake --dag \| dot -Tsvg > dag.svg` |
+| stage | snakemake target | pixi tasks | what it does | output path |
+|---|---|---|---|---|
+| fMRIprep extraction | `extract_fmriprep_all` | `dry-extract-fmriprep`, `extract-fmriprep` | untars each subject's `fmriprep-20.2.6` derivatives tar into `results/{dataset}/fmriprep/`. **Must run once before the rest of the pipeline** — later rules read from this extracted directory. | `results/{dataset}/fmriprep/` |
+| denoising | `denoise_all` | `dry-denoise`, `denoise` | nilearn-based confound regression on the T1w-space preprocessed BOLD (`workflow/scripts/denoise.py`), per confound set in `config["confounds"]`. | `results/{dataset}/denoised/` |
+| surfaces | `gen_midthickness_all` | `dry-surfaces`, `surfaces` | extracts freesurfer surfaces from `freesurfer_tar`, converts white/pial to GIFTI directly in scanner-RAS space (via `mris_convert --to-scanner`), and builds native-space midthickness surfaces (needs the freesurfer container + `wb_command`). | `results/{dataset}/surfaces/` |
+| resampling | `resample2fsLR_all` | `dry-fslr`, `fslr` | projects denoised volumes onto the native surface, then resamples to fsLR 32k. | `results/{dataset}/resampled2fsLR32k/` |
+| smoothing | `smooth_all` | `dry-smooth`, `smooth` | surface smoothing at each `fwhm` in `config["fwhm"]` (FWHM is converted to sigma before being passed to `wb_command`). | `results/{dataset}/smoothed/` |
+| parcellation | `parcellate_original_all` | `dry-parcellate`, `parcellate` | averages resampled (or temporally-resampled) surface data within each `config["parcellations"]` atlas. | `results/{dataset}/{source}-parcellated/{atlas}/` |
+| ISC | `ISC_all` | `dry-isc`, `isc` | pairwise and leave-one-out ISC (vertex-level and per-parcellation) plus functional connectivity. | `results/{dataset}/pwISC/`, `results/{dataset}/FC/{atlas}/` |
+| ISC significance (SWB) | `pwISC_bootstrap_movie` | `dry-pwisc-swb`, `pwisc-swb` | subject-wise bootstrap significance testing (Chen et al., 2016) on the pairwise ISC from `pw_ISC`, run over every parcellation atlas and every smoothing level (vertex-level included), excluding QC-flagged subjects (`config["subjid_exclude"]`). Vertex-level (`atlas=none`) jobs get a longer SLURM runtime since the bootstrap loop isn't yet optimized for that many units — see the `PERF TODO` in `workflow/scripts/pwISC_bootstrap.py`. | `results/{dataset}/pwISC_stats/` |
+| archiving | `archive_results` | `dry-archive`, `archive` | packages `results/{dataset}` into a SquashFS image under `archive_dir` (the dataset's project-space directory). | `archive_dir` (project space) |
+| everything | (default target) | `dry-run`, `run` | runs the full DAG up to the pipeline's default target. | — |
+| DAG visualization | — | `dag` | `snakemake --dag \| dot -Tsvg > dag.svg` | — |
 
 #### Configuring the pipeline
 
@@ -201,6 +212,10 @@ Here is a list of available parcellations:
 `
 wb_command -cifti-separate <input>.dlabel.nii COLUMN -label CORTEX_LEFT <output_L>.label.gii -label CORTEX_RIGHT <output_R>.label.gii
 `
+
+**ISC significance testing (SWB)**
+
+`n_perm_bootstrap` (`config/snakebids.yml`) sets the number of subject-wise bootstrap resamples used by `pwISC_bootstrap` (default 10000); `bootstrap_seed` fixes the RNG seed for reproducibility (leave blank for a random seed per run). `subjid_exclude` lists subject IDs to drop from the significance test (e.g. QC failures), matching the exclusions applied in `notebooks/pairwise_summary.ipynb`.
 
 #### Troubleshooting: locked directory
 
