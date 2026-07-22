@@ -84,8 +84,6 @@ target_TR: 2
 
 # ---
 participants_tsv: '/project/6033493/datasets/{dataset}/participants.tsv'
-# # Denoise configs
-# search_terms: {}
 # #optional: specify tar containing a particular subject'a freesurfer folder
 freesurfer_root: 'results/{dataset}/freesurfer'
 freesurfer: 'results/{dataset}/freesurfer/sub-{subject}'
@@ -95,7 +93,9 @@ freesurfer_tar: '/project/6033493/datasets/{dataset}/derivatives/freesurfer-7.2.
 fMRIprep_dir: 'results/{dataset}/fmriprep'
 fmriprep_tar: '/project/6033493/datasets/{dataset}/derivatives/fmriprep-20.2.6/sub-{subject}_fmriprep-20.2.6.tar.gz'
 
-archive_dir: '/project/6033493/datasets/{dataset}'
+# path for archiving results (optional)
+archive_dir: '/project/6033493/trainees/current/alit/EpLink/{dataset}'
+archive_file: '{dataset}_snakemake-results.sqfs'
 
 wb_module: 'connectome-workbench'  # check exact name with: module spider connectome
 # output_dir: '/project/6050199/alit/EpLink/phase3'

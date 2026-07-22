@@ -950,6 +950,11 @@ rule tSNR_parcellated:
     default_target: True
 
 
+_archive_sqfs = join(
+    config["archive_dir"].format(dataset=config["dataset"]),
+    config["archive_file"].format(dataset=config["dataset"]),
+)
+
 ## Archive results to project space as a SquashFS image
 rule archive_results:
     input:
@@ -960,12 +965,30 @@ rule archive_results:
         src=f"results/{config['dataset']}",
         dest=config["archive_dir"].format(dataset=config["dataset"]),
     output:
-        sqfs=config["archive_dir"].format(dataset=config["dataset"])
-              + f"/{config['dataset']}_ISC-pipeline.sqfs",
+        sqfs=_archive_sqfs,
     threads: 8
     resources:
         mem_mb=8000,
         runtime=120,
     shell:
         "mkdir -p {params.dest} && "
-        "mksquashfs {params.src} {output.sqfs} -comp zstd -noappend -processors {threads}"
+        "mksquashfs {params.src} {output.sqfs} -comp zstd -processors {threads}"
+
+
+## Retrieve archived results back to scratch (inverse of archive_results)
+## NOTE: sqfs is a params (not input) on purpose -- it's the *output* path of
+## archive_results, and listing it as an input would pull archive_results (and
+## its entire upstream DAG) into `--until retrieve_archive`.
+rule retrieve_archive:
+    params:
+        sqfs=_archive_sqfs,
+        dest=f"results/{config['dataset']}",
+    output:
+        touch(f"results/{config['dataset']}/.retrieved"),
+    threads: 4
+    resources:
+        mem_mb=4000,
+        runtime=60,
+    shell:
+        "mkdir -p {params.dest} && "
+        "unsquashfs -f -d {params.dest} {params.sqfs}"
