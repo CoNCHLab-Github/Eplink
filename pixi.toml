@@ -57,6 +57,8 @@ dry-isc        = "snakemake --snakefile workflow/Snakefile --profile workflow/pr
 isc            = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until ISC_all"
 dry-pwisc-swb  = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until pwISC_bootstrap_movie --dry-run"
 pwisc-swb      = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until pwISC_bootstrap_movie"
+dry-fc         = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until fc_all --dry-run"
+fc             = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until fc_all"
 
 dry-archive  = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until archive_results --dry-run"
 archive      = "snakemake --snakefile workflow/Snakefile --profile workflow/profiles/slurm --until archive_results"
